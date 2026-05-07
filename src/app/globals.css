@@ -1,26 +1,52 @@
 @import "tailwindcss";
+:root{
+  /* tokens */
+  --blue-5: #3b82f6;
+  --lime-3: #bef264;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-sans: "Untitled Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "Söhne Mono", "Menlo", monospace, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Fondo general con degradado */
+@layer base{
+  html, body{
+    min-height: 100%;
+    background: linear-gradient(120deg, var(--blue-5), var(--lime-3));
+    background-attachment: fixed; /* que no “salte” al hacer scroll */
+    color: #0a0a0a;
   }
+  body{ font-family: var(--font-sans); }
+  code, pre{ font-family: var(--font-mono); }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Cards blancas para contraste sobre el fondo degradado */
+.card{
+  @apply rounded-2xl border border-black/5 bg-white shadow-sm;
 }
+
+/* Utilidad por si quieres usar el gradiente en bandas específicas */
+.bg-hero{ background: linear-gradient(120deg, var(--blue-5), var(--lime-3)); }
+
+/* Contenedor responsivo con padding lateral consistente */
+.container-p {
+  /* ancho y centrado */
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80rem; /* ~1280px (7xl aprox) */
+  /* padding lateral por breakpoint */
+  padding-left: 1rem;   /* px-4 */
+  padding-right: 1rem;
+}
+@media (min-width: 768px) {
+  .container-p { padding-left: 1.5rem; padding-right: 1.5rem; } /* md:px-6 */
+}
+@media (min-width: 1024px) {
+  .container-p { padding-left: 2rem; padding-right: 2rem; }     /* lg:px-8 */
+}
+
+/* Separación vertical estándar para las páginas */
+.page-pad-y { padding-top: 1.5rem; padding-bottom: 2rem; }       /* py-6 ~ py-8 */
+@media (min-width: 768px) { .page-pad-y { padding-top: 2rem; padding-bottom: 2.5rem; } }
+@media (min-width: 1024px){ .page-pad-y { padding-top: 2.5rem; padding-bottom: 3rem; } }
