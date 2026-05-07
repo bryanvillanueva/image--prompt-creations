@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { taxonomiesApi } from "@/lib/api/taxonomies";
 import { qk } from "@/lib/queries/keys";
 import { MAX_TAGS_PER_PROMPT } from "@/lib/constants";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 interface TagInputProps {
   value: string[];
@@ -15,6 +16,7 @@ interface TagInputProps {
 }
 
 export function TagInput({ value, onChange, invalid }: TagInputProps) {
+  const { t } = useT();
   const [text, setText] = React.useState("");
   const [focused, setFocused] = React.useState(false);
 
@@ -26,9 +28,9 @@ export function TagInput({ value, onChange, invalid }: TagInputProps) {
 
   const suggestions = React.useMemo(() => {
     if (!text.trim()) return [];
-    const t = text.toLowerCase();
+    const q = text.toLowerCase();
     return (tags ?? [])
-      .filter((tag) => tag.name.toLowerCase().includes(t) && !value.includes(tag.name))
+      .filter((tag) => tag.name.toLowerCase().includes(q) && !value.includes(tag.name))
       .slice(0, 6);
   }, [text, tags, value]);
 
@@ -41,7 +43,7 @@ export function TagInput({ value, onChange, invalid }: TagInputProps) {
     setText("");
   };
 
-  const removeTag = (tag: string) => onChange(value.filter((t) => t !== tag));
+  const removeTag = (tag: string) => onChange(value.filter((tg) => tg !== tag));
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
@@ -66,7 +68,7 @@ export function TagInput({ value, onChange, invalid }: TagInputProps) {
               type="button"
               onClick={() => removeTag(tag)}
               className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-white/40"
-              aria-label={`Quitar ${tag}`}
+              aria-label={t("tagInput.removeAria", { tag })}
             >
               <X className="h-3 w-3" />
             </button>
@@ -79,12 +81,12 @@ export function TagInput({ value, onChange, invalid }: TagInputProps) {
           onKeyDown={onKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
-          placeholder={value.length === 0 ? "agrega tags y presiona Enter…" : ""}
+          placeholder={value.length === 0 ? t("tagInput.placeholder") : ""}
           className="flex-1 min-w-[120px] h-7 px-1 shadow-none focus:shadow-none"
         />
       </div>
       <div className="text-xs text-[var(--color-fg-muted)] mt-1">
-        {value.length}/{MAX_TAGS_PER_PROMPT} tags
+        {t("tagInput.counter", { count: value.length, max: MAX_TAGS_PER_PROMPT })}
       </div>
       {focused && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-md shadow-card z-20 p-1">

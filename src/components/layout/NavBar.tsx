@@ -16,12 +16,15 @@ import {
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/I18nProvider";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export function NavBar() {
   const { user, isAuthenticated, role, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useT();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const initialQuery = params.get("q") ?? "";
@@ -44,14 +47,14 @@ export function NavBar() {
       <div className="container-app flex h-14 items-center gap-4">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight shrink-0">
           <Sparkles className="h-5 w-5" />
-          <span>Promptlib</span>
+          <span>{t("nav.brand")}</span>
         </Link>
 
         <form onSubmit={onSearchSubmit} className="hidden md:flex flex-1 max-w-md items-center relative">
           <Search className="absolute left-3 h-4 w-4 text-[var(--color-fg-placeholder)]" />
           <Input
             type="search"
-            placeholder="Buscar prompts…"
+            placeholder={t("nav.searchPlaceholder")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="pl-9"
@@ -66,22 +69,23 @@ export function NavBar() {
               pathname === "/" && "text-[var(--color-fg)]",
             )}
           >
-            Explorar
+            {t("nav.explore")}
           </Link>
           {isAuthenticated && (
             <Link href="/prompts/new">
               <Button size="sm" variant="primary">
                 <Plus className="h-4 w-4" />
-                Subir prompt
+                {t("nav.uploadPrompt")}
               </Button>
             </Link>
           )}
+          <LanguageSwitcher className="ml-1" />
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className="ml-1 rounded-full transition-shadow hover:shadow-ring-light"
-                  aria-label="Menú de usuario"
+                  aria-label={t("nav.userMenu")}
                 >
                   <Avatar src={user?.avatar_url} name={user?.name} size={32} />
                 </button>
@@ -108,17 +112,17 @@ export function NavBar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href={`/u/${user?.username}`}>
-                    <User className="h-4 w-4" /> Mi perfil
+                    <User className="h-4 w-4" /> {t("nav.myProfile")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/me/prompts">
-                    <Library className="h-4 w-4" /> Mis prompts
+                    <Library className="h-4 w-4" /> {t("nav.myPrompts")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/me/saved">
-                    <Library className="h-4 w-4" /> Guardados
+                    <Library className="h-4 w-4" /> {t("nav.saved")}
                   </Link>
                 </DropdownMenuItem>
                 {isStaff && (
@@ -126,14 +130,14 @@ export function NavBar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/admin/pending">
-                        <Shield className="h-4 w-4" /> Panel admin
+                        <Shield className="h-4 w-4" /> {t("nav.adminPanel")}
                       </Link>
                     </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => logout()}>
-                  <LogOut className="h-4 w-4" /> Cerrar sesión
+                  <LogOut className="h-4 w-4" /> {t("nav.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -141,25 +145,28 @@ export function NavBar() {
             <>
               <Link href="/login">
                 <Button size="sm" variant="ghost">
-                  Iniciar sesión
+                  {t("nav.signIn")}
                 </Button>
               </Link>
               <Link href="/register">
                 <Button size="sm" variant="primary">
-                  Registrarse
+                  {t("nav.signUp")}
                 </Button>
               </Link>
             </>
           )}
         </nav>
 
-        <button
-          className="md:hidden ml-auto inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-[var(--color-bg-subtle)]"
-          aria-label="Abrir menú"
-          onClick={() => setMobileOpen((v) => !v)}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="md:hidden ml-auto flex items-center gap-1">
+          <LanguageSwitcher />
+          <button
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-[var(--color-bg-subtle)]"
+            aria-label={t("nav.openMenu")}
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -169,42 +176,42 @@ export function NavBar() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-fg-placeholder)]" />
               <Input
                 type="search"
-                placeholder="Buscar prompts…"
+                placeholder={t("nav.searchPlaceholder")}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 className="pl-9"
               />
             </form>
             <Link href="/" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
-              Explorar
+              {t("nav.explore")}
             </Link>
             {isAuthenticated ? (
               <>
                 <Link href="/prompts/new" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
-                  Subir prompt
+                  {t("nav.uploadPrompt")}
                 </Link>
                 <Link href="/me/prompts" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
-                  Mis prompts
+                  {t("nav.myPrompts")}
                 </Link>
                 <Link href="/me/saved" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
-                  Guardados
+                  {t("nav.saved")}
                 </Link>
                 {isStaff && (
                   <Link href="/admin/pending" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
-                    Panel admin
+                    {t("nav.adminPanel")}
                   </Link>
                 )}
                 <button onClick={() => { setMobileOpen(false); logout(); }} className="text-left px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]">
-                  Cerrar sesión
+                  {t("nav.signOut")}
                 </button>
               </>
             ) : (
               <div className="flex gap-2">
                 <Link href="/login" className="flex-1" onClick={() => setMobileOpen(false)}>
-                  <Button size="md" variant="secondary" className="w-full">Iniciar sesión</Button>
+                  <Button size="md" variant="secondary" className="w-full">{t("nav.signIn")}</Button>
                 </Link>
                 <Link href="/register" className="flex-1" onClick={() => setMobileOpen(false)}>
-                  <Button size="md" variant="primary" className="w-full">Registrarse</Button>
+                  <Button size="md" variant="primary" className="w-full">{t("nav.signUp")}</Button>
                 </Link>
               </div>
             )}

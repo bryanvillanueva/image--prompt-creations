@@ -9,8 +9,10 @@ import { MasonryGrid } from "@/components/gallery/MasonryGrid";
 import { PromptCard } from "@/components/gallery/PromptCard";
 import { meApi } from "@/lib/api/prompts";
 import { qk } from "@/lib/queries/keys";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export default function SavedPage() {
+  const { t } = useT();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.me.saved,
     queryFn: () => meApi.saved({ limit: 60 }),
@@ -29,11 +31,11 @@ export default function SavedPage() {
   if (items.length === 0) {
     return (
       <EmptyState
-        title="Sin prompts guardados"
-        description="Guarda prompts que te inspiren para encontrarlos rápido aquí."
+        title={t("me.savedEmptyTitle")}
+        description={t("me.savedEmptyDescription")}
         action={
           <Link href="/">
-            <Button>Explorar prompts</Button>
+            <Button>{t("me.savedEmptyAction")}</Button>
           </Link>
         }
       />

@@ -11,10 +11,12 @@ import { usersApi } from "@/lib/api/taxonomies";
 import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
 import { formatDate } from "@/lib/format";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export default function PublicProfilePage() {
   const params = useParams<{ username: string }>();
   const username = params.username;
+  const { t } = useT();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.users.public(username),
@@ -32,7 +34,7 @@ export default function PublicProfilePage() {
 
   if (error) {
     if (error instanceof ApiError && error.status === 404) {
-      return <EmptyState title="Usuario no encontrado" />;
+      return <EmptyState title={t("publicProfile.notFound")} />;
     }
     return <ErrorState onRetry={() => refetch()} />;
   }
@@ -49,13 +51,13 @@ export default function PublicProfilePage() {
           <div className="text-[var(--color-fg-muted)]">@{user.username}</div>
           {user.bio && <p className="mt-3 max-w-xl text-body">{user.bio}</p>}
           <div className="text-xs text-[var(--color-fg-muted)] mt-3">
-            Miembro desde {formatDate(user.created_at)} · {prompts.length} prompts
+            {t("publicProfile.memberSince", { date: formatDate(user.created_at), count: prompts.length })}
           </div>
         </div>
       </header>
 
       {prompts.length === 0 ? (
-        <EmptyState title="Aún no tiene prompts publicados" />
+        <EmptyState title={t("publicProfile.noPromptsTitle")} />
       ) : (
         <MasonryGrid>
           {prompts.map((p) => (

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../constants";
+import { tNow } from "../i18n/I18nProvider";
 import type { ApiErrorDetail, ApiResponse } from "../types";
 
 export class ApiError extends Error {
@@ -35,17 +36,17 @@ export class ApiError extends Error {
 
 function defaultMessageFor(status: number): string {
   switch (status) {
-    case 400: return "Solicitud inválida";
-    case 401: return "Necesitas iniciar sesión";
-    case 403: return "No tienes permisos para realizar esta acción";
-    case 404: return "Recurso no encontrado";
-    case 409: return "Conflicto con datos existentes";
-    case 413: return "El archivo es demasiado grande";
-    case 415: return "Formato de archivo no soportado";
-    case 422: return "Datos inválidos";
-    case 429: return "Demasiadas peticiones, espera un momento";
-    case 500: return "Error interno del servidor";
-    default:  return `Error inesperado (${status})`;
+    case 400: return tNow("apiErrors.e400");
+    case 401: return tNow("apiErrors.e401");
+    case 403: return tNow("apiErrors.e403");
+    case 404: return tNow("apiErrors.e404");
+    case 409: return tNow("apiErrors.e409");
+    case 413: return tNow("apiErrors.e413");
+    case 415: return tNow("apiErrors.e415");
+    case 422: return tNow("apiErrors.e422");
+    case 429: return tNow("apiErrors.e429");
+    case 500: return tNow("apiErrors.e500");
+    default:  return tNow("apiErrors.eDefault", { status });
   }
 }
 

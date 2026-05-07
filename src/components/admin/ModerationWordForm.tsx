@@ -21,6 +21,7 @@ import {
   SEVERITIES,
 } from "@/lib/constants";
 import type { ModerationWord } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 interface Props {
   open: boolean;
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function ModerationWordForm({ open, onOpenChange, initial, onSubmit, loading }: Props) {
+  const { t } = useT();
   const {
     register,
     handleSubmit,
@@ -59,61 +61,61 @@ export function ModerationWordForm({ open, onOpenChange, initial, onSubmit, load
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{initial ? "Editar regla" : "Nueva regla"}</DialogTitle>
+          <DialogTitle>{initial ? t("admin.wordEdit") : t("admin.wordCreate")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="term">Término *</Label>
+            <Label htmlFor="term">{t("admin.wordTerm")}</Label>
             <Input id="term" invalid={!!errors.term} {...register("term")} />
             <FieldError message={errors.term?.message} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="language">Idioma</Label>
-              <Input id="language" placeholder="es, en…" {...register("language")} />
+              <Label htmlFor="language">{t("admin.wordLanguage")}</Label>
+              <Input id="language" placeholder={t("admin.wordLanguagePlaceholder")} {...register("language")} />
             </div>
             <div>
-              <Label htmlFor="match_type">Tipo de match</Label>
+              <Label htmlFor="match_type">{t("admin.wordMatchType")}</Label>
               <Select id="match_type" {...register("match_type")}>
                 {MATCH_TYPES.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
+                  <option key={m.value} value={m.value}>{t(`matchType.${m.value}`)}</option>
                 ))}
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="category">Categoría</Label>
+              <Label htmlFor="category">{t("admin.wordCategory")}</Label>
               <Select id="category" {...register("category")}>
                 {MODERATION_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                  <option key={c.value} value={c.value}>{t(`moderationCategory.${c.value}`)}</option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label htmlFor="severity">Severidad</Label>
+              <Label htmlFor="severity">{t("admin.wordSeverity")}</Label>
               <Select id="severity" {...register("severity")}>
                 {SEVERITIES.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                  <option key={s.value} value={s.value}>{t(`severity.${s.value}`)}</option>
                 ))}
               </Select>
             </div>
           </div>
           <div>
-            <Label htmlFor="action">Acción</Label>
+            <Label htmlFor="action">{t("admin.wordAction")}</Label>
             <Select id="action" {...register("action")}>
               {MODERATION_ACTIONS.map((a) => (
-                <option key={a.value} value={a.value}>{a.label}</option>
+                <option key={a.value} value={a.value}>{t(`moderationAction.${a.value}`)}</option>
               ))}
             </Select>
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" {...register("is_active")} className="h-4 w-4" />
-            Activa
+            {t("admin.wordActive")}
           </label>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" loading={loading}>{initial ? "Guardar" : "Crear"}</Button>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+            <Button type="submit" loading={loading}>{initial ? t("admin.wordSubmitEdit") : t("admin.wordSubmitCreate")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

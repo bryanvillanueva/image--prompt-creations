@@ -13,18 +13,20 @@ import { PromptCard } from "@/components/gallery/PromptCard";
 import { ModerationBanner } from "@/components/prompt/ModerationBanner";
 import { meApi } from "@/lib/api/prompts";
 import { qk } from "@/lib/queries/keys";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 const STATUSES = [
-  { value: "", label: "Todos" },
-  { value: "pending", label: "Pendientes" },
-  { value: "approved", label: "Aprobados" },
-  { value: "rejected", label: "Rechazados" },
-  { value: "blocked", label: "Bloqueados" },
-  { value: "hidden", label: "Ocultos" },
+  { value: "", labelKey: "promptStatusFilter.all" },
+  { value: "pending", labelKey: "promptStatusFilter.pending" },
+  { value: "approved", labelKey: "promptStatusFilter.approved" },
+  { value: "rejected", labelKey: "promptStatusFilter.rejected" },
+  { value: "blocked", labelKey: "promptStatusFilter.blocked" },
+  { value: "hidden", labelKey: "promptStatusFilter.hidden" },
 ] as const;
 
 export default function MyPromptsPage() {
   const [status, setStatus] = useState<string>("");
+  const { t } = useT();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.me.prompts({ status: status || undefined }),
@@ -39,7 +41,7 @@ export default function MyPromptsPage() {
         <TabsList>
           {STATUSES.map((s) => (
             <TabsTrigger key={s.value || "all"} value={s.value}>
-              {s.label}
+              {t(s.labelKey)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -53,11 +55,11 @@ export default function MyPromptsPage() {
         <ErrorState onRetry={() => refetch()} />
       ) : items.length === 0 ? (
         <EmptyState
-          title="No tienes prompts aún"
-          description="Comparte tu primer prompt con la comunidad."
+          title={t("me.promptsEmptyTitle")}
+          description={t("me.promptsEmptyDescription")}
           action={
             <Link href="/prompts/new">
-              <Button>Subir prompt</Button>
+              <Button>{t("me.promptsEmptyAction")}</Button>
             </Link>
           }
         />
@@ -65,7 +67,7 @@ export default function MyPromptsPage() {
         <div className="space-y-4">
           {items.some((p) => p.status === "pending" || p.status === "blocked" || p.status === "rejected") && status === "" && (
             <p className="text-sm text-[var(--color-fg-muted)]">
-              Algunos prompts requieren atención. Revisa los estados abajo.
+              {t("me.promptsAttention")}
             </p>
           )}
           <MasonryGrid>
@@ -83,7 +85,7 @@ export default function MyPromptsPage() {
                       "neutral"
                     }
                   >
-                    {p.status}
+                    {t(`promptStatus.${p.status}`)}
                   </Badge>
                 </div>
                 {(p.status === "pending" || p.status === "blocked" || p.status === "rejected") && (

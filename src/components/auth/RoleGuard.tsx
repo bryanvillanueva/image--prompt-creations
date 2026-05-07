@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useT } from "@/lib/i18n/I18nProvider";
 import type { Role } from "@/lib/types";
 
 interface RoleGuardProps {
@@ -15,6 +16,7 @@ export function RoleGuard({ allow, children }: RoleGuardProps) {
   const { user, isAuthenticated, isLoading, role } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useT();
 
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -33,8 +35,8 @@ export function RoleGuard({ allow, children }: RoleGuardProps) {
   if (!role || !allow.includes(role)) {
     return (
       <EmptyState
-        title="No autorizado"
-        description="No tienes permisos para ver esta sección."
+        title={t("guard.forbiddenTitle")}
+        description={t("guard.forbiddenDescription")}
       />
     );
   }

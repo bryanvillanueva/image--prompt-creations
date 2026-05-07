@@ -17,9 +17,10 @@ import { taxonomiesApi } from "@/lib/api/taxonomies";
 import { promptsApi } from "@/lib/api/prompts";
 import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
-import { promptFormSchema, type PromptFormValues } from "@/lib/validators";
+import { makePromptFormSchema, type PromptFormValues } from "@/lib/validators";
 import { ASPECT_RATIOS, MODELS, VISIBILITY_OPTIONS } from "@/lib/constants";
 import type { Prompt } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 interface PromptFormProps {
   initial?: Prompt;
@@ -28,6 +29,8 @@ interface PromptFormProps {
 export function PromptForm({ initial }: PromptFormProps) {
   const router = useRouter();
   const isEditing = !!initial;
+  const { t } = useT();
+  const schema = React.useMemo(() => makePromptFormSchema(t), [t]);
 
   const { data: categories } = useQuery({
     queryKey: qk.taxonomies.categories,
@@ -42,7 +45,7 @@ export function PromptForm({ initial }: PromptFormProps) {
     control,
     formState: { errors, isSubmitting },
   } = useForm<PromptFormValues>({
-    resolver: zodResolver(promptFormSchema) as Resolver<PromptFormValues>,
+    resolver: zodResolver(schema) as Resolver<PromptFormValues>,
     defaultValues: {
       title: initial?.title ?? "",
       prompt_text: initial?.prompt_text ?? "",
@@ -53,7 +56,7 @@ export function PromptForm({ initial }: PromptFormProps) {
       style: initial?.style ?? "",
       description: initial?.description ?? "",
       visibility: initial?.visibility ?? "public",
-      tags: initial?.tags?.map((t) => t.name) ?? [],
+      tags: initial?.tags?.map((tg) => tg.name) ?? [],
       alt_text: initial?.image?.alt_text ?? "",
       image: undefined,
     },
@@ -82,12 +85,12 @@ export function PromptForm({ initial }: PromptFormProps) {
       const action = res.meta?.moderation?.action;
       const label =
         action === "block"
-          ? "El prompt fue bloqueado por el filtro automático. Un moderador lo revisará."
+          ? t("promptForm.blocked")
           : action === "needs_review" || action === "flag"
-          ? "Tu prompt fue enviado a revisión."
+          ? t("promptForm.review")
           : isEditing
-          ? "Cambios guardados. Tu prompt vuelve a revisión."
-          : "Prompt enviado. Pronto un moderador lo revisará.";
+          ? t("promptForm.editedReview")
+          : t("promptForm.sent");
       toast.success(label);
       router.push(`/prompts/${res.data.slug}`);
     },
@@ -99,25 +102,25 @@ export function PromptForm({ initial }: PromptFormProps) {
           });
           toast.error(err.message);
         } else if (err.status === 413) {
-          setError("image", { message: "La imagen supera los 3 MB." });
+          setError("image", { message: t("promptForm.tooLarge") });
         } else if (err.status === 415) {
-          setError("image", { message: "Formato no soportado." });
+          setError("image", { message: t("promptForm.badFormat") });
         } else if (err.status === 429) {
-          toast.error("Has alcanzado tu cuota diaria de subidas.");
+          toast.error(t("promptForm.quotaExceeded"));
         } else if (err.status === 401) {
           router.push("/login?next=/prompts/new");
         } else {
           toast.error(err.message);
         }
       } else {
-        toast.error("Error de conexión");
+        toast.error(t("common.connectionError"));
       }
     },
   });
 
   const onSubmit = (data: PromptFormValues) => {
     if (!isEditing && !data.image) {
-      setError("image", { message: "Selecciona una imagen" });
+      setError("image", { message: t("promptForm.selectImage") });
       return;
     }
     mutation.mutate(data);
@@ -144,17 +147,17 @@ export function PromptForm({ initial }: PromptFormProps) {
         />
 
         <div>
-          <Label htmlFor="title">Título *</Label>
+          <Label htmlFor="title">{t("promptForm.titleLabel")}</Label>
           <Input id="title" invalid={!!errors.title} {...register("title")} />
           <FieldError message={errors.title?.message} />
         </div>
 
         <div>
-          <Label htmlFor="prompt_text">Prompt *</Label>
+          <Label htmlFor="prompt_text">{t("promptForm.promptLabel")}</Label>
           <Textarea
             id="prompt_text"
             rows={6}
-            placeholder="Describe lo que el modelo debería generar…"
+            placeholder={t("promptForm.promptPlaceholder")}
             invalid={!!errors.prompt_text}
             {...register("prompt_text")}
           />
@@ -162,19 +165,19 @@ export function PromptForm({ initial }: PromptFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="negative_prompt">Negative prompt</Label>
+          <Label htmlFor="negative_prompt">{t("promptForm.negativeLabel")}</Label>
           <Textarea id="negative_prompt" rows={3} {...register("negative_prompt")} />
           <FieldError message={errors.negative_prompt?.message} />
         </div>
 
         <div>
-          <Label htmlFor="description">Descripción</Label>
+          <Label htmlFor="description">{t("promptForm.descriptionLabel")}</Label>
           <Textarea id="description" rows={3} {...register("description")} />
           <FieldError message={errors.description?.message} />
         </div>
 
         <div>
-          <Label htmlFor="alt_text">Texto alternativo (accesibilidad)</Label>
+          <Label htmlFor="alt_text">{t("promptForm.altLabel")}</Label>
           <Input id="alt_text" {...register("alt_text")} />
           <FieldError message={errors.alt_text?.message} />
         </div>
@@ -182,9 +185,9 @@ export function PromptForm({ initial }: PromptFormProps) {
 
       <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
         <div>
-          <Label htmlFor="category_id">Categoría *</Label>
+          <Label htmlFor="category_id">{t("promptForm.categoryLabel")}</Label>
           <Select id="category_id" invalid={!!errors.category_id} {...register("category_id", { valueAsNumber: true })}>
-            <option value="">Selecciona una categoría</option>
+            <option value="">{t("promptForm.categoryPlaceholder")}</option>
             {categories?.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -193,9 +196,9 @@ export function PromptForm({ initial }: PromptFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="model_name">Modelo *</Label>
+          <Label htmlFor="model_name">{t("promptForm.modelLabel")}</Label>
           <Select id="model_name" invalid={!!errors.model_name} {...register("model_name")}>
-            <option value="">Selecciona un modelo</option>
+            <option value="">{t("promptForm.modelPlaceholder")}</option>
             {MODELS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -204,7 +207,7 @@ export function PromptForm({ initial }: PromptFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="aspect_ratio">Aspect ratio</Label>
+          <Label htmlFor="aspect_ratio">{t("promptForm.aspectLabel")}</Label>
           <Select id="aspect_ratio" {...register("aspect_ratio")}>
             <option value="">—</option>
             {ASPECT_RATIOS.map((a) => (
@@ -215,22 +218,22 @@ export function PromptForm({ initial }: PromptFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="style">Estilo visual</Label>
-          <Input id="style" placeholder="ej: cinematic, anime…" {...register("style")} />
+          <Label htmlFor="style">{t("promptForm.styleLabel")}</Label>
+          <Input id="style" placeholder={t("promptForm.stylePlaceholder")} {...register("style")} />
           <FieldError message={errors.style?.message} />
         </div>
 
         <div>
-          <Label htmlFor="visibility">Visibilidad</Label>
+          <Label htmlFor="visibility">{t("promptForm.visibilityLabel")}</Label>
           <Select id="visibility" {...register("visibility")}>
             {VISIBILITY_OPTIONS.map((v) => (
-              <option key={v.value} value={v.value}>{v.label}</option>
+              <option key={v.value} value={v.value}>{t(`visibility.${v.value}`)}</option>
             ))}
           </Select>
         </div>
 
         <div>
-          <Label>Tags</Label>
+          <Label>{t("promptForm.tagsLabel")}</Label>
           <Controller
             control={control}
             name="tags"
@@ -246,12 +249,11 @@ export function PromptForm({ initial }: PromptFormProps) {
         </div>
 
         <div className="bg-[var(--color-bg-subtle)] shadow-ring-light rounded-md p-3 text-xs text-[var(--color-fg-muted)]">
-          Los prompts se publican tras una revisión manual. Asegúrate de cumplir las
-          reglas de comunidad para evitar bloqueos.
+          {t("promptForm.reviewNotice")}
         </div>
 
         <Button type="submit" loading={isSubmitting || mutation.isPending} className="w-full">
-          {isEditing ? "Guardar cambios" : "Publicar prompt"}
+          {isEditing ? t("promptForm.submitEdit") : t("promptForm.submitCreate")}
         </Button>
       </aside>
     </form>

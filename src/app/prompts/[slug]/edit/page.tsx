@@ -7,10 +7,12 @@ import { promptsApi } from "@/lib/api/prompts";
 import { qk } from "@/lib/queries/keys";
 import { Spinner } from "@/components/ui/Spinner";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export default function EditPromptPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
+  const { t } = useT();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.prompts.bySlug(slug),
@@ -20,9 +22,9 @@ export default function EditPromptPage() {
   return (
     <AuthGuard>
       <div className="space-y-2 mb-6">
-        <h1 className="text-h1">Editar prompt</h1>
+        <h1 className="text-h1">{t("editPrompt.title")}</h1>
         <p className="text-body-lg text-[var(--color-fg-muted)]">
-          Al guardar, el prompt vuelve a revisión.
+          {t("editPrompt.lead")}
         </p>
       </div>
       {isLoading ? (

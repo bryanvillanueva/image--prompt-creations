@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -14,14 +14,17 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { loginSchema, type LoginInput } from "@/lib/validators";
+import { makeLoginSchema, type LoginInput } from "@/lib/validators";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
   const { setUser, isAuthenticated } = useAuth();
+  const { t } = useT();
+  const schema = useMemo(() => makeLoginSchema(t), [t]);
 
   const {
     register,
@@ -29,7 +32,7 @@ function LoginInner() {
     setError,
     formState: { errors },
   } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
 
@@ -37,7 +40,7 @@ function LoginInner() {
     mutationFn: (input: LoginInput) => authApi.login(input),
     onSuccess: (res) => {
       setUser(res.data.user);
-      toast.success(`¡Bienvenido, ${res.data.user.name}!`);
+      toast.success(t("auth.login.welcome", { name: res.data.user.name }));
       router.replace(next);
     },
     onError: (err) => {
@@ -52,7 +55,7 @@ function LoginInner() {
           toast.error(err.message);
         }
       } else {
-        toast.error("Error de conexión");
+        toast.error(t("common.connectionError"));
       }
     },
   });
@@ -65,14 +68,14 @@ function LoginInner() {
     <Card className="animate-fade-in">
       <CardBody className="p-8 space-y-5">
         <div className="space-y-1">
-          <h1 className="text-h2">Iniciar sesión</h1>
+          <h1 className="text-h2">{t("auth.login.title")}</h1>
           <p className="text-sm text-[var(--color-fg-muted)]">
-            Ingresa para subir prompts, dar likes y guardar tu inspiración.
+            {t("auth.login.lead")}
           </p>
         </div>
         <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.login.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -83,7 +86,7 @@ function LoginInner() {
             <FieldError message={errors.email?.message} />
           </div>
           <div>
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">{t("auth.login.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -94,13 +97,13 @@ function LoginInner() {
             <FieldError message={errors.password?.message} />
           </div>
           <Button type="submit" className="w-full" loading={mutation.isPending}>
-            Iniciar sesión
+            {t("auth.login.submit")}
           </Button>
         </form>
         <div className="text-sm text-[var(--color-fg-muted)] text-center">
-          ¿No tienes cuenta?{" "}
+          {t("auth.login.noAccount")}{" "}
           <Link href="/register" className="text-[var(--color-link)] hover:underline">
-            Regístrate
+            {t("auth.login.register")}
           </Link>
         </div>
       </CardBody>

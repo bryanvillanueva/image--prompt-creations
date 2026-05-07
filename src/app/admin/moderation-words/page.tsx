@@ -16,10 +16,12 @@ import { qk } from "@/lib/queries/keys";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { EmptyState as NotAuthorized } from "@/components/ui/EmptyState";
 import type { ModerationWord } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export default function ModerationWordsPage() {
   const { role } = useAuth();
   const qc = useQueryClient();
+  const { t } = useT();
   const [editing, setEditing] = useState<ModerationWord | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -32,35 +34,35 @@ export default function ModerationWordsPage() {
   const create = useMutation({
     mutationFn: adminApi.createModWord,
     onSuccess: () => {
-      toast.success("Regla creada");
+      toast.success(t("admin.wordCreated"));
       setCreating(false);
       qc.invalidateQueries({ queryKey: qk.admin.modWords });
     },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const update = useMutation({
     mutationFn: ({ id, ...rest }: { id: number } & Parameters<typeof adminApi.updateModWord>[1]) =>
       adminApi.updateModWord(id, rest),
     onSuccess: () => {
-      toast.success("Regla actualizada");
+      toast.success(t("admin.wordUpdated"));
       setEditing(null);
       qc.invalidateQueries({ queryKey: qk.admin.modWords });
     },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => adminApi.deleteModWord(id),
     onSuccess: () => {
-      toast.success("Regla eliminada");
+      toast.success(t("admin.wordDeleted"));
       qc.invalidateQueries({ queryKey: qk.admin.modWords });
     },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   if (role !== "admin") {
-    return <NotAuthorized title="Solo admin" description="Esta sección solo está disponible para administradores." />;
+    return <NotAuthorized title={t("admin.wordsAdminOnlyTitle")} description={t("admin.wordsAdminOnlyDescription")} />;
   }
 
   const items = data?.data ?? [];
@@ -69,13 +71,13 @@ export default function ModerationWordsPage() {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-h2">Palabras prohibidas</h2>
+          <h2 className="text-h2">{t("admin.wordsTitle")}</h2>
           <p className="text-body text-[var(--color-fg-muted)]">
-            Reglas que el filtro automático aplica al subir o editar prompts.
+            {t("admin.wordsLead")}
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4" /> Nueva regla
+          <Plus className="h-4 w-4" /> {t("admin.wordsNew")}
         </Button>
       </div>
 
@@ -84,7 +86,7 @@ export default function ModerationWordsPage() {
       ) : error ? (
         <ErrorState onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <EmptyState title="Sin reglas" description="Crea la primera regla para comenzar." />
+        <EmptyState title={t("admin.wordsEmptyTitle")} description={t("admin.wordsEmptyDescription")} />
       ) : (
         <div className="space-y-2">
           {items.map((w) => (
@@ -93,13 +95,13 @@ export default function ModerationWordsPage() {
                 <code className="font-mono text-sm bg-[var(--color-bg-subtle)] shadow-ring-light px-2 py-1 rounded-md">
                   {w.term}
                 </code>
-                <Badge variant="neutral">{w.match_type}</Badge>
+                <Badge variant="neutral">{t(`matchType.${w.match_type}`)}</Badge>
                 <Badge variant={w.severity === "critical" || w.severity === "high" ? "danger" : w.severity === "medium" ? "warning" : "neutral"}>
-                  {w.severity}
+                  {t(`severity.${w.severity}`)}
                 </Badge>
-                <Badge variant="blue">{w.category}</Badge>
-                <Badge variant="dark">{w.action}</Badge>
-                {!w.is_active && <Badge variant="neutral">inactiva</Badge>}
+                <Badge variant="blue">{t(`moderationCategory.${w.category}`)}</Badge>
+                <Badge variant="dark">{t(`moderationAction.${w.action}`)}</Badge>
+                {!w.is_active && <Badge variant="neutral">{t("admin.wordsInactive")}</Badge>}
                 <div className="ml-auto flex gap-2">
                   <Button size="sm" variant="ghost" onClick={() => setEditing(w)}>
                     <Pencil className="h-4 w-4" />
@@ -109,7 +111,7 @@ export default function ModerationWordsPage() {
                     variant="ghost"
                     className="text-[var(--color-danger-fg)]"
                     onClick={() => {
-                      if (confirm(`¿Eliminar la regla "${w.term}"?`)) remove.mutate(w.id);
+                      if (confirm(t("admin.wordDeleteConfirm", { term: w.term }))) remove.mutate(w.id);
                     }}
                     loading={remove.isPending}
                   >

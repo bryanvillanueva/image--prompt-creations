@@ -7,10 +7,12 @@ import { promptsApi } from "@/lib/api/prompts";
 import { qk } from "@/lib/queries/keys";
 import type { Prompt } from "@/lib/types";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export function CopyPromptButton({ prompt }: { prompt: Prompt }) {
   const [copied, setCopied] = React.useState(false);
   const qc = useQueryClient();
+  const { t } = useT();
 
   const mutation = useMutation({
     mutationFn: () => promptsApi.copy(prompt.slug),
@@ -28,14 +30,14 @@ export function CopyPromptButton({ prompt }: { prompt: Prompt }) {
       setTimeout(() => setCopied(false), 1600);
       mutation.mutate();
     } catch {
-      toast.error("No pudimos copiar al portapapeles");
+      toast.error(t("promptDetail.copyError"));
     }
   };
 
   return (
     <Button onClick={onClick} variant="primary" size="md">
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copied ? "Copiado" : "Copiar prompt"}
+      {copied ? t("common.copied") : t("promptDetail.copyButton")}
     </Button>
   );
 }

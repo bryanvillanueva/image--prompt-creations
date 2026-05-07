@@ -36,7 +36,8 @@ import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { formatDate, formatNumber } from "@/lib/format";
-import { rejectSchema, type RejectInput } from "@/lib/validators";
+import { makeRejectSchema, type RejectInput } from "@/lib/validators";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export default function PromptDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -44,6 +45,8 @@ export default function PromptDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const { user, role } = useAuth();
+  const { t } = useT();
+  const rejectSchema = React.useMemo(() => makeRejectSchema(t), [t]);
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const [rejectOpen, setRejectOpen] = React.useState(false);
 
@@ -56,36 +59,36 @@ export default function PromptDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => promptsApi.remove(id),
     onSuccess: () => {
-      toast.success("Prompt eliminado");
+      toast.success(t("promptDetail.deleted"));
       qc.invalidateQueries({ queryKey: qk.prompts.all });
       router.push("/me/prompts");
     },
-    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Error al eliminar"),
+    onError: (err) => toast.error(err instanceof ApiError ? err.message : t("promptDetail.deleteError")),
   });
 
   const onModError = (err: unknown) =>
-    toast.error(err instanceof ApiError ? err.message : "Error");
+    toast.error(err instanceof ApiError ? err.message : t("common.genericError"));
   const refetchPrompt = () => qc.invalidateQueries({ queryKey: qk.prompts.bySlug(slug) });
 
   const approve = useMutation({
     mutationFn: (id: number) => adminApi.approve(id),
-    onSuccess: () => { toast.success("Prompt aprobado"); refetchPrompt(); },
+    onSuccess: () => { toast.success(t("promptDetail.approved")); refetchPrompt(); },
     onError: onModError,
   });
   const block = useMutation({
     mutationFn: (id: number) => adminApi.block(id),
-    onSuccess: () => { toast.success("Prompt bloqueado"); refetchPrompt(); },
+    onSuccess: () => { toast.success(t("promptDetail.blocked")); refetchPrompt(); },
     onError: onModError,
   });
   const hide = useMutation({
     mutationFn: (id: number) => adminApi.hide(id),
-    onSuccess: () => { toast.success("Prompt oculto"); refetchPrompt(); },
+    onSuccess: () => { toast.success(t("promptDetail.hidden")); refetchPrompt(); },
     onError: onModError,
   });
   const reject = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) => adminApi.reject(id, reason),
     onSuccess: () => {
-      toast.success("Prompt rechazado");
+      toast.success(t("promptDetail.rejected"));
       setRejectOpen(false);
       refetchPrompt();
     },
@@ -108,7 +111,7 @@ export default function PromptDetailPage() {
   if (error) {
     if (error instanceof ApiError && error.status === 404) {
       return (
-        <ErrorState title="Prompt no encontrado" message="Este prompt no existe o no está disponible." />
+        <ErrorState title={t("promptDetail.notFoundTitle")} message={t("promptDetail.notFound")} />
       );
     }
     return <ErrorState onRetry={() => refetch()} />;
@@ -129,13 +132,12 @@ export default function PromptDetailPage() {
 
   return (
     <article className="grid lg:grid-cols-2 gap-8 animate-fade-in">
-      {/* Imagen */}
       <div className="bg-white rounded-xl shadow-card overflow-hidden">
         {prompt.image?.url ? (
           <button
             type="button"
             onClick={() => setLightboxOpen(true)}
-            aria-label={`Ver imagen completa: ${prompt.title}`}
+            aria-label={t("promptCard.viewFull", { title: prompt.title })}
             className="relative block w-full bg-[var(--color-bg-subtle)] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-link)]"
             style={{ aspectRatio: aspect }}
           >
@@ -162,7 +164,6 @@ export default function PromptDetailPage() {
         />
       )}
 
-      {/* Info */}
       <div className="flex flex-col gap-6 min-w-0">
         {!isApproved && (
           <ModerationBanner
@@ -182,7 +183,7 @@ export default function PromptDetailPage() {
                   "neutral"
                 }
               >
-                {prompt.status}
+                {t(`promptStatus.${prompt.status}`)}
               </Badge>
             )}
           </div>
@@ -201,9 +202,9 @@ export default function PromptDetailPage() {
           <div className="text-xs text-[var(--color-fg-muted)] flex items-center gap-3 flex-wrap">
             <span>{formatDate(prompt.created_at)}</span>
             <span>·</span>
-            <span>{formatNumber(prompt.views_count)} vistas</span>
+            <span>{t("promptDetail.views", { count: formatNumber(prompt.views_count) })}</span>
             <span>·</span>
-            <span>{formatNumber(prompt.copied_count)} copias</span>
+            <span>{t("promptDetail.copies", { count: formatNumber(prompt.copied_count) })}</span>
           </div>
         </header>
 
@@ -219,7 +220,7 @@ export default function PromptDetailPage() {
           {canEdit && (
             <Link href={`/prompts/${prompt.slug}/edit`} className="ml-auto">
               <Button variant="ghost">
-                <Pencil className="h-4 w-4" /> Editar
+                <Pencil className="h-4 w-4" /> {t("common.edit")}
               </Button>
             </Link>
           )}
@@ -227,21 +228,21 @@ export default function PromptDetailPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                if (confirm("¿Eliminar este prompt? Esta acción no se puede deshacer.")) {
+                if (confirm(t("promptDetail.deleteConfirm"))) {
                   deleteMutation.mutate(prompt.id);
                 }
               }}
               loading={deleteMutation.isPending}
               className="text-[var(--color-danger-fg)]"
             >
-              <Trash2 className="h-4 w-4" /> Eliminar
+              <Trash2 className="h-4 w-4" /> {t("common.delete")}
             </Button>
           )}
         </div>
 
         {isStaff && (
           <section className="rounded-md shadow-ring-light p-3 space-y-2">
-            <div className="text-mono-label text-[var(--color-fg-muted)]">Acciones de moderación</div>
+            <div className="text-mono-label text-[var(--color-fg-muted)]">{t("promptDetail.moderationActions")}</div>
             <div className="flex flex-wrap gap-2">
               {(prompt.status === "pending" || prompt.status === "blocked") && (
                 <Button
@@ -250,7 +251,7 @@ export default function PromptDetailPage() {
                   loading={approve.isPending}
                   disabled={modBusy}
                 >
-                  <CheckCircle2 className="h-4 w-4" /> Aprobar
+                  <CheckCircle2 className="h-4 w-4" /> {t("promptDetail.approve")}
                 </Button>
               )}
               {prompt.status !== "rejected" && (
@@ -260,7 +261,7 @@ export default function PromptDetailPage() {
                   onClick={() => setRejectOpen(true)}
                   disabled={modBusy}
                 >
-                  <Ban className="h-4 w-4" /> Rechazar
+                  <Ban className="h-4 w-4" /> {t("promptDetail.reject")}
                 </Button>
               )}
               {prompt.status !== "blocked" && (
@@ -271,7 +272,7 @@ export default function PromptDetailPage() {
                   loading={block.isPending}
                   disabled={modBusy}
                 >
-                  <Ban className="h-4 w-4" /> Bloquear
+                  <Ban className="h-4 w-4" /> {t("promptDetail.block")}
                 </Button>
               )}
               {prompt.status === "approved" && (
@@ -282,7 +283,7 @@ export default function PromptDetailPage() {
                   loading={hide.isPending}
                   disabled={modBusy}
                 >
-                  <EyeOff className="h-4 w-4" /> Ocultar
+                  <EyeOff className="h-4 w-4" /> {t("promptDetail.hide")}
                 </Button>
               )}
             </div>
@@ -290,7 +291,7 @@ export default function PromptDetailPage() {
         )}
 
         <section className="space-y-2">
-          <div className="text-mono-label text-[var(--color-fg-muted)]">Prompt</div>
+          <div className="text-mono-label text-[var(--color-fg-muted)]">{t("promptDetail.promptLabel")}</div>
           <pre className="rounded-md bg-[var(--color-bg-subtle)] shadow-ring-light p-4 text-sm whitespace-pre-wrap break-words font-mono">
             {prompt.prompt_text}
           </pre>
@@ -298,7 +299,7 @@ export default function PromptDetailPage() {
 
         {prompt.negative_prompt && (
           <section className="space-y-2">
-            <div className="text-mono-label text-[var(--color-fg-muted)]">Negative prompt</div>
+            <div className="text-mono-label text-[var(--color-fg-muted)]">{t("promptDetail.negativeLabel")}</div>
             <pre className="rounded-md bg-[var(--color-bg-subtle)] shadow-ring-light p-4 text-sm whitespace-pre-wrap break-words font-mono">
               {prompt.negative_prompt}
             </pre>
@@ -307,25 +308,25 @@ export default function PromptDetailPage() {
 
         {prompt.description && (
           <section className="space-y-2">
-            <div className="text-mono-label text-[var(--color-fg-muted)]">Descripción</div>
+            <div className="text-mono-label text-[var(--color-fg-muted)]">{t("promptDetail.descriptionLabel")}</div>
             <p className="text-body text-[var(--color-fg-muted)] whitespace-pre-wrap">{prompt.description}</p>
           </section>
         )}
 
         <section className="grid grid-cols-2 gap-4 text-sm">
-          <Detail label="Modelo" value={prompt.model_name} />
-          {prompt.aspect_ratio && <Detail label="Aspect ratio" value={prompt.aspect_ratio} />}
-          {prompt.style && <Detail label="Estilo" value={prompt.style} />}
-          <Detail label="Visibilidad" value={prompt.visibility} />
+          <Detail label={t("promptDetail.modelDetail")} value={prompt.model_name} />
+          {prompt.aspect_ratio && <Detail label={t("promptDetail.aspectDetail")} value={prompt.aspect_ratio} />}
+          {prompt.style && <Detail label={t("promptDetail.styleDetail")} value={prompt.style} />}
+          <Detail label={t("promptDetail.visibilityDetail")} value={t(`visibility.${prompt.visibility}`)} />
         </section>
 
         {prompt.tags.length > 0 && (
           <section className="space-y-2">
-            <div className="text-mono-label text-[var(--color-fg-muted)]">Tags</div>
+            <div className="text-mono-label text-[var(--color-fg-muted)]">{t("promptDetail.tagsDetail")}</div>
             <div className="flex flex-wrap gap-1.5">
-              {prompt.tags.map((t) => (
-                <Link key={t.id} href={`/?tag=${t.slug}`}>
-                  <Badge variant="blue">#{t.name}</Badge>
+              {prompt.tags.map((tg) => (
+                <Link key={tg.id} href={`/?tag=${tg.slug}`}>
+                  <Badge variant="blue">#{tg.name}</Badge>
                 </Link>
               ))}
             </div>
@@ -340,9 +341,9 @@ export default function PromptDetailPage() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Rechazar prompt</DialogTitle>
+              <DialogTitle>{t("promptDetail.rejectTitle")}</DialogTitle>
               <DialogDescription>
-                El usuario verá el motivo en su panel. Sé claro y constructivo.
+                {t("promptDetail.rejectDescription")}
               </DialogDescription>
             </DialogHeader>
             <form
@@ -352,7 +353,7 @@ export default function PromptDetailPage() {
               className="space-y-4"
             >
               <div>
-                <Label htmlFor="rejection_reason">Motivo</Label>
+                <Label htmlFor="rejection_reason">{t("promptDetail.rejectReasonLabel")}</Label>
                 <Textarea
                   id="rejection_reason"
                   rows={4}
@@ -363,10 +364,10 @@ export default function PromptDetailPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setRejectOpen(false)}>
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button type="submit" loading={reject.isPending} variant="danger">
-                  Rechazar
+                  {t("promptDetail.reject")}
                 </Button>
               </DialogFooter>
             </form>

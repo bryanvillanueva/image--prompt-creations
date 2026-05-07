@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -14,14 +14,17 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { registerSchema, type RegisterInput } from "@/lib/validators";
+import { makeRegisterSchema, type RegisterInput } from "@/lib/validators";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 function RegisterInner() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
   const { setUser, isAuthenticated } = useAuth();
+  const { t } = useT();
+  const schema = useMemo(() => makeRegisterSchema(t), [t]);
 
   const {
     register,
@@ -29,7 +32,7 @@ function RegisterInner() {
     setError,
     formState: { errors },
   } = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(schema),
     defaultValues: { name: "", username: "", email: "", password: "" },
   });
 
@@ -37,7 +40,7 @@ function RegisterInner() {
     mutationFn: (input: RegisterInput) => authApi.register(input),
     onSuccess: (res) => {
       setUser(res.data.user);
-      toast.success("Cuenta creada. ¡Bienvenido!");
+      toast.success(t("auth.register.success"));
       router.replace(next);
     },
     onError: (err) => {
@@ -45,7 +48,10 @@ function RegisterInner() {
         if (err.status === 409) {
           if (err.message.toLowerCase().includes("email")) {
             setError("email", { message: err.message });
-          } else if (err.message.toLowerCase().includes("usuario") || err.message.toLowerCase().includes("username")) {
+          } else if (
+            err.message.toLowerCase().includes("usuario") ||
+            err.message.toLowerCase().includes("username")
+          ) {
             setError("username", { message: err.message });
           } else {
             toast.error(err.message);
@@ -55,12 +61,12 @@ function RegisterInner() {
             setError(d.field as keyof RegisterInput, { message: d.message });
           });
         } else if (err.status === 429) {
-          toast.error("Demasiados registros desde esta IP. Espera un momento.");
+          toast.error(t("auth.register.tooMany"));
         } else {
           toast.error(err.message);
         }
       } else {
-        toast.error("Error de conexión");
+        toast.error(t("common.connectionError"));
       }
     },
   });
@@ -73,35 +79,35 @@ function RegisterInner() {
     <Card className="animate-fade-in">
       <CardBody className="p-8 space-y-5">
         <div className="space-y-1">
-          <h1 className="text-h2">Crear cuenta</h1>
+          <h1 className="text-h2">{t("auth.register.title")}</h1>
           <p className="text-sm text-[var(--color-fg-muted)]">
-            Únete para publicar prompts y construir tu biblioteca personal.
+            {t("auth.register.lead")}
           </p>
         </div>
         <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
           <div>
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor="name">{t("auth.register.name")}</Label>
             <Input id="name" autoComplete="name" invalid={!!errors.name} {...register("name")} />
             <FieldError message={errors.name?.message} />
           </div>
           <div>
-            <Label htmlFor="username">Usuario</Label>
+            <Label htmlFor="username">{t("auth.register.username")}</Label>
             <Input
               id="username"
               autoComplete="username"
-              placeholder="ej: bryan.r"
+              placeholder={t("auth.register.usernamePlaceholder")}
               invalid={!!errors.username}
               {...register("username")}
             />
             <FieldError message={errors.username?.message} />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.register.email")}</Label>
             <Input id="email" type="email" autoComplete="email" invalid={!!errors.email} {...register("email")} />
             <FieldError message={errors.email?.message} />
           </div>
           <div>
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">{t("auth.register.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -112,24 +118,24 @@ function RegisterInner() {
             <FieldError message={errors.password?.message} />
           </div>
           <p className="text-xs text-[var(--color-fg-muted)]">
-            Al registrarte aceptas nuestras{" "}
+            {t("auth.register.agreePrefix")}{" "}
             <Link href="/rules" className="text-[var(--color-link)] hover:underline">
-              reglas de comunidad
+              {t("auth.register.rulesLink")}
             </Link>{" "}
-            y{" "}
+            {t("auth.register.andText")}{" "}
             <Link href="/terms" className="text-[var(--color-link)] hover:underline">
-              términos
+              {t("auth.register.termsLink")}
             </Link>
             .
           </p>
           <Button type="submit" className="w-full" loading={mutation.isPending}>
-            Crear cuenta
+            {t("auth.register.submit")}
           </Button>
         </form>
         <div className="text-sm text-[var(--color-fg-muted)] text-center">
-          ¿Ya tienes cuenta?{" "}
+          {t("auth.register.hasAccount")}{" "}
           <Link href="/login" className="text-[var(--color-link)] hover:underline">
-            Inicia sesión
+            {t("auth.register.login")}
           </Link>
         </div>
       </CardBody>

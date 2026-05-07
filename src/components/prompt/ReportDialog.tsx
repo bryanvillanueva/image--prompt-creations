@@ -25,11 +25,13 @@ import { REPORT_REASONS } from "@/lib/constants";
 import { promptsApi } from "@/lib/api/prompts";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export function ReportDialog({ promptId, slug }: { promptId: number; slug: string }) {
   const [open, setOpen] = React.useState(false);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const { t } = useT();
 
   const {
     register,
@@ -45,7 +47,7 @@ export function ReportDialog({ promptId, slug }: { promptId: number; slug: strin
     mutationFn: (input: ReportInput) =>
       promptsApi.report(promptId, { reason: input.reason, description: input.description || undefined }),
     onSuccess: () => {
-      toast.success("Reporte enviado. Gracias por ayudar a mantener la comunidad sana.");
+      toast.success(t("reportDialog.success"));
       setOpen(false);
       reset();
     },
@@ -70,34 +72,34 @@ export function ReportDialog({ promptId, slug }: { promptId: number; slug: strin
             }
           }}
         >
-          <Flag className="h-4 w-4" /> Reportar
+          <Flag className="h-4 w-4" /> {t("reportDialog.trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reportar prompt</DialogTitle>
+          <DialogTitle>{t("reportDialog.title")}</DialogTitle>
           <DialogDescription>
-            Cuéntanos qué problema tiene este contenido. Un moderador lo revisará pronto.
+            {t("reportDialog.description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
           <div>
-            <Label htmlFor="reason">Razón</Label>
+            <Label htmlFor="reason">{t("reportDialog.reasonLabel")}</Label>
             <Select id="reason" invalid={!!errors.reason} {...register("reason")}>
               {REPORT_REASONS.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
+                <option key={r.value} value={r.value}>{t(`reportReason.${r.value}`)}</option>
               ))}
             </Select>
             <FieldError message={errors.reason?.message} />
           </div>
           <div>
-            <Label htmlFor="description">Descripción (opcional)</Label>
+            <Label htmlFor="description">{t("reportDialog.descriptionLabel")}</Label>
             <Textarea id="description" rows={4} invalid={!!errors.description} {...register("description")} />
             <FieldError message={errors.description?.message} />
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit" loading={mutation.isPending}>Enviar reporte</Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+            <Button type="submit" loading={mutation.isPending}>{t("reportDialog.submit")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

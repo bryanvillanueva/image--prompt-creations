@@ -4,6 +4,7 @@ import Image from "next/image";
 import * as RDialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { PromptImage } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 interface ImageLightboxProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ open, onOpenChange, image, title }: ImageLightboxProps) {
+  const { t } = useT();
   const aspect = image.width && image.height ? image.width / image.height : 1;
   const alt = image.alt_text || title;
 
@@ -42,7 +44,7 @@ export function ImageLightbox({ open, onOpenChange, image, title }: ImageLightbo
           </div>
           <RDialog.Close
             className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            aria-label="Cerrar"
+            aria-label={t("common.close")}
           >
             <X className="h-5 w-5" />
           </RDialog.Close>

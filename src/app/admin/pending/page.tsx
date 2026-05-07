@@ -9,18 +9,20 @@ import { PromptModerationCard } from "@/components/admin/PromptModerationCard";
 import { adminApi } from "@/lib/api/admin";
 import { qk } from "@/lib/queries/keys";
 import type { PromptStatus } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
-const TABS: { value: "all" | PromptStatus; label: string }[] = [
-  { value: "all", label: "Pendientes + bloqueados" },
-  { value: "pending", label: "Pendientes" },
-  { value: "blocked", label: "Bloqueados" },
-  { value: "approved", label: "Aprobados" },
-  { value: "rejected", label: "Rechazados" },
-  { value: "hidden", label: "Ocultos" },
+const TABS: { value: "all" | PromptStatus; labelKey: string }[] = [
+  { value: "all", labelKey: "admin.tabAll" },
+  { value: "pending", labelKey: "admin.tabPending" },
+  { value: "blocked", labelKey: "admin.tabBlocked" },
+  { value: "approved", labelKey: "admin.tabApproved" },
+  { value: "rejected", labelKey: "admin.tabRejected" },
+  { value: "hidden", labelKey: "admin.tabHidden" },
 ];
 
 export default function PendingPage() {
   const [tab, setTab] = useState<"all" | PromptStatus>("all");
+  const { t } = useT();
 
   const status = tab === "all" ? undefined : tab;
   const { data, isLoading, error, refetch } = useQuery({
@@ -32,13 +34,13 @@ export default function PendingPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-h2">Cola de revisión</h2>
-        <p className="text-body text-[var(--color-fg-muted)]">Aprueba, rechaza, bloquea u oculta contenido.</p>
+        <h2 className="text-h2">{t("admin.pendingTitle")}</h2>
+        <p className="text-body text-[var(--color-fg-muted)]">{t("admin.pendingLead")}</p>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
-          {TABS.map((t) => (
-            <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>
+          {TABS.map((tg) => (
+            <TabsTrigger key={tg.value} value={tg.value}>{t(tg.labelKey)}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
@@ -47,7 +49,7 @@ export default function PendingPage() {
       ) : error ? (
         <ErrorState onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <EmptyState title="Cola vacía" description="No hay prompts en este estado." />
+        <EmptyState title={t("admin.queueEmptyTitle")} description={t("admin.queueEmptyDescription")} />
       ) : (
         <div className="space-y-4">
           {items.map((p) => <PromptModerationCard key={p.id} prompt={p} />)}

@@ -6,17 +6,19 @@ import { Shield } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { role } = useAuth();
+  const { t } = useT();
   const isAdmin = role === "admin";
 
   const items = [
-    { href: "/admin/pending", label: "Cola de revisión" },
-    { href: "/admin/reports", label: "Reportes" },
-    { href: "/admin/users", label: "Usuarios" },
-    ...(isAdmin ? [{ href: "/admin/moderation-words", label: "Palabras prohibidas" }] : []),
+    { href: "/admin/pending", label: t("admin.navPending") },
+    { href: "/admin/reports", label: t("admin.navReports") },
+    { href: "/admin/users", label: t("admin.navUsers") },
+    ...(isAdmin ? [{ href: "/admin/moderation-words", label: t("admin.navWords") }] : []),
   ];
 
   return (
@@ -25,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside className="space-y-2">
           <div className="inline-flex items-center gap-2 text-mono-label text-[var(--color-fg-muted)]">
             <Shield className="h-3.5 w-3.5" />
-            Panel admin
+            {t("admin.sidebarTitle")}
           </div>
           <nav className="flex flex-col gap-1 mt-2">
             {items.map((it) => (

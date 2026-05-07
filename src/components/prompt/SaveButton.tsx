@@ -9,12 +9,14 @@ import { promptsApi } from "@/lib/api/prompts";
 import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useT } from "@/lib/i18n/I18nProvider";
 import type { Prompt } from "@/lib/types";
 
 export function SaveButton({ prompt }: { prompt: Prompt }) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const qc = useQueryClient();
+  const { t } = useT();
   const [saved, setSaved] = React.useState(false);
 
   const mutation = useMutation({
@@ -39,7 +41,7 @@ export function SaveButton({ prompt }: { prompt: Prompt }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.me.saved });
-      toast.success(saved ? "Guardado en tu biblioteca" : "Eliminado de guardados");
+      toast.success(saved ? t("promptDetail.saveAdded") : t("promptDetail.saveRemoved"));
     },
   });
 
@@ -55,7 +57,7 @@ export function SaveButton({ prompt }: { prompt: Prompt }) {
       }}
     >
       <Bookmark className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
-      {saved ? "Guardado" : "Guardar"}
+      {saved ? t("promptDetail.savedButton") : t("promptDetail.saveButton")}
     </Button>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE_BYTES } from "@/lib/constants";
 import { formatBytes } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 interface ImageUploaderProps {
   value?: File | null;
@@ -21,6 +22,7 @@ export function ImageUploader({
   invalid,
   errorMessage,
 }: ImageUploaderProps) {
+  const { t } = useT();
   const [preview, setPreview] = React.useState<string | null>(initialUrl ?? null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = React.useState(false);
@@ -43,11 +45,11 @@ export function ImageUploader({
       return;
     }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setLocalError("Formato no soportado. Usa JPG, PNG o WEBP.");
+      setLocalError(t("imageUploader.formatError"));
       return;
     }
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      setLocalError(`La imagen pesa ${formatBytes(file.size)}, máximo permitido 3 MB.`);
+      setLocalError(t("imageUploader.sizeError", { size: formatBytes(file.size) }));
       return;
     }
     onChange(file);
@@ -90,14 +92,14 @@ export function ImageUploader({
                 if (inputRef.current) inputRef.current.value = "";
               }}
               className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-card hover:bg-[var(--color-bg-subtle)]"
-              aria-label="Quitar imagen"
+              aria-label={t("imageUploader.removeAria")}
             >
               <X className="h-4 w-4" />
             </button>
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between bg-white/90 backdrop-blur rounded-md px-3 py-2 text-xs">
               <div className="flex items-center gap-2">
                 <ImageIcon className="h-4 w-4" />
-                <span className="truncate max-w-[200px]">{value?.name ?? "Imagen actual"}</span>
+                <span className="truncate max-w-[200px]">{value?.name ?? t("imageUploader.currentImage")}</span>
               </div>
               {value && <span className="text-[var(--color-fg-muted)]">{formatBytes(value.size)}</span>}
             </div>
@@ -105,10 +107,10 @@ export function ImageUploader({
         ) : (
           <div className="flex flex-col items-center justify-center text-center p-12 text-[var(--color-fg-muted)]">
             <Upload className="h-8 w-8 mb-3" />
-            <div className="font-medium text-[var(--color-fg)]">Arrastra una imagen o haz clic para subirla</div>
-            <div className="text-xs mt-1">JPG, PNG o WEBP · máx. 3 MB</div>
+            <div className="font-medium text-[var(--color-fg)]">{t("imageUploader.dropOrClick")}</div>
+            <div className="text-xs mt-1">{t("imageUploader.hint")}</div>
             <Button type="button" variant="secondary" size="sm" className="mt-4" onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}>
-              Seleccionar archivo
+              {t("imageUploader.pickFile")}
             </Button>
           </div>
         )}

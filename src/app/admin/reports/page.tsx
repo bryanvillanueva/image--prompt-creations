@@ -14,17 +14,18 @@ import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
 import { formatDate } from "@/lib/format";
-import { REPORT_REASONS } from "@/lib/constants";
+import { useT } from "@/lib/i18n/I18nProvider";
 
-const STATUSES: { value: string; label: string }[] = [
-  { value: "pending", label: "Pendientes" },
-  { value: "resolved", label: "Resueltos" },
-  { value: "dismissed", label: "Descartados" },
+const STATUSES: { value: string; labelKey: string }[] = [
+  { value: "pending", labelKey: "admin.reportsTabPending" },
+  { value: "resolved", labelKey: "admin.reportsTabResolved" },
+  { value: "dismissed", labelKey: "admin.reportsTabDismissed" },
 ];
 
 export default function ReportsPage() {
   const [status, setStatus] = useState("pending");
   const qc = useQueryClient();
+  const { t } = useT();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.admin.reports({ status }),
@@ -35,10 +36,10 @@ export default function ReportsPage() {
     mutationFn: ({ id, status }: { id: number; status: "resolved" | "dismissed" }) =>
       adminApi.resolveReport(id, status),
     onSuccess: () => {
-      toast.success("Reporte actualizado");
+      toast.success(t("admin.reportUpdated"));
       qc.invalidateQueries({ queryKey: ["admin", "reports"] });
     },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const items = data?.data ?? [];
@@ -46,13 +47,13 @@ export default function ReportsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-h2">Reportes</h2>
-        <p className="text-body text-[var(--color-fg-muted)]">Revisa el contenido reportado por la comunidad.</p>
+        <h2 className="text-h2">{t("admin.reportsTitle")}</h2>
+        <p className="text-body text-[var(--color-fg-muted)]">{t("admin.reportsLead")}</p>
       </div>
       <Tabs value={status} onValueChange={setStatus}>
         <TabsList>
           {STATUSES.map((s) => (
-            <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>
+            <TabsTrigger key={s.value} value={s.value}>{t(s.labelKey)}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
@@ -62,11 +63,11 @@ export default function ReportsPage() {
       ) : error ? (
         <ErrorState onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <EmptyState title="Sin reportes" description="No hay reportes en este estado." />
+        <EmptyState title={t("admin.reportsEmptyTitle")} description={t("admin.reportsEmptyDescription")} />
       ) : (
         <div className="space-y-3">
           {items.map((r) => {
-            const reasonLabel = REPORT_REASONS.find((x) => x.value === r.reason)?.label ?? r.reason;
+            const reasonLabel = t(`reportReason.${r.reason}`);
             return (
               <Card key={r.id}>
                 <CardBody className="p-5 space-y-3">
@@ -88,17 +89,17 @@ export default function ReportsPage() {
                       )}
                       {r.reporter_username && (
                         <div className="text-xs text-[var(--color-fg-muted)] mt-1">
-                          Reportado por @{r.reporter_username}
+                          {t("admin.reportedBy", { username: r.reporter_username })}
                         </div>
                       )}
                     </div>
                     {r.status === "pending" && (
                       <div className="flex gap-2 shrink-0">
                         <Button size="sm" onClick={() => resolve.mutate({ id: r.id, status: "resolved" })} loading={resolve.isPending}>
-                          Resolver
+                          {t("admin.reportResolve")}
                         </Button>
                         <Button size="sm" variant="secondary" onClick={() => resolve.mutate({ id: r.id, status: "dismissed" })} loading={resolve.isPending}>
-                          Descartar
+                          {t("admin.reportDismiss")}
                         </Button>
                       </div>
                     )}

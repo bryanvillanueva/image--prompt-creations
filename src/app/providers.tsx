@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { AuthProvider } from "@/lib/auth/AuthContext";
+import { I18nProvider } from "@/lib/i18n/I18nProvider";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -32,10 +33,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={200}>
-        <AuthProvider>{children}</AuthProvider>
-      </TooltipProvider>
-      <Toaster position="bottom-right" richColors closeButton />
+      <I18nProvider>
+        <TooltipProvider delayDuration={200}>
+          <AuthProvider>{children}</AuthProvider>
+        </TooltipProvider>
+        <Toaster position="bottom-right" richColors closeButton />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

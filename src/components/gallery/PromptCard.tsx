@@ -7,8 +7,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ImageLightbox } from "@/components/gallery/ImageLightbox";
 import { formatNumber } from "@/lib/format";
 import type { Prompt } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 export function PromptCard({ prompt }: { prompt: Prompt }) {
+  const { t } = useT();
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const aspect = prompt.image?.width && prompt.image?.height
     ? prompt.image.width / prompt.image.height
@@ -21,7 +23,7 @@ export function PromptCard({ prompt }: { prompt: Prompt }) {
         <button
           type="button"
           onClick={() => setLightboxOpen(true)}
-          aria-label={`Ver imagen completa: ${prompt.title}`}
+          aria-label={t("promptCard.viewFull", { title: prompt.title })}
           className="relative block w-full bg-[var(--color-bg-subtle)] cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-link)]"
           style={{ aspectRatio: aspect }}
         >
@@ -39,7 +41,7 @@ export function PromptCard({ prompt }: { prompt: Prompt }) {
           style={{ aspectRatio: aspect }}
         >
           <div className="absolute inset-0 grid place-items-center text-[var(--color-fg-placeholder)]">
-            sin imagen
+            {t("promptCard.noImage")}
           </div>
         </div>
       )}
@@ -56,15 +58,15 @@ export function PromptCard({ prompt }: { prompt: Prompt }) {
             </div>
           )}
           <div className="flex items-center gap-3 shrink-0">
-            <span className="inline-flex items-center gap-1" title="Likes">
+            <span className="inline-flex items-center gap-1" title={t("promptCard.likes")}>
               <Heart className="h-3.5 w-3.5" />
               {formatNumber(prompt.likes_count)}
             </span>
-            <span className="inline-flex items-center gap-1" title="Guardados">
+            <span className="inline-flex items-center gap-1" title={t("promptCard.saves")}>
               <Bookmark className="h-3.5 w-3.5" />
               {formatNumber(prompt.saves_count)}
             </span>
-            <span className="inline-flex items-center gap-1" title="Copias">
+            <span className="inline-flex items-center gap-1" title={t("promptCard.copies")}>
               <Copy className="h-3.5 w-3.5" />
               {formatNumber(prompt.copied_count)}
             </span>

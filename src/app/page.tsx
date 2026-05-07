@@ -13,12 +13,14 @@ import { PromptCard, PromptCardSkeleton } from "@/components/gallery/PromptCard"
 import { promptsApi } from "@/lib/api/prompts";
 import { qk } from "@/lib/queries/keys";
 import type { SortOption } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 const PAGE_SIZE = 20;
 
 function HomeInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useT();
 
   const filters: Filters = useMemo(
     () => ({
@@ -62,10 +64,9 @@ function HomeInner() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-2">
-        <h1 className="text-h1">Biblioteca de prompts IA</h1>
+        <h1 className="text-h1">{t("home.title")}</h1>
         <p className="text-body-lg text-[var(--color-fg-muted)] max-w-2xl">
-          Descubre, copia y guarda prompts para generar imágenes con tus modelos favoritos.
-          Hechos por la comunidad, listos para inspirarte.
+          {t("home.lead")}
         </p>
       </div>
 
@@ -73,13 +74,15 @@ function HomeInner() {
 
       <div className="flex items-center justify-between text-sm text-[var(--color-fg-muted)]">
         <div>
-          {total !== null ? `${total} resultado${total === 1 ? "" : "s"}` : "Cargando…"}
+          {total !== null
+            ? t(total === 1 ? "home.resultsOne" : "home.resultsMany", { count: total })
+            : t("home.loadingResults")}
         </div>
       </div>
 
       {query.isError ? (
         <ErrorState
-          message="No pudimos obtener los prompts del servidor."
+          message={t("home.errorMessage")}
           onRetry={() => query.refetch()}
         />
       ) : query.isLoading ? (
@@ -90,11 +93,11 @@ function HomeInner() {
         </MasonryGrid>
       ) : items.length === 0 ? (
         <EmptyState
-          title="Sin resultados"
-          description="Prueba a cambiar los filtros o la búsqueda."
+          title={t("home.emptyTitle")}
+          description={t("home.emptyDescription")}
           action={
             <Link href="/prompts/new">
-              <Button>Sé el primero en publicar</Button>
+              <Button>{t("home.emptyAction")}</Button>
             </Link>
           }
         />
@@ -112,12 +115,12 @@ function HomeInner() {
                 onClick={() => query.fetchNextPage()}
                 loading={query.isFetchingNextPage}
               >
-                Cargar más
+                {t("home.loadMore")}
               </Button>
             ) : query.isFetching ? (
               <Spinner className="text-[var(--color-fg-muted)]" />
             ) : (
-              <div className="text-sm text-[var(--color-fg-muted)]">Has llegado al final.</div>
+              <div className="text-sm text-[var(--color-fg-muted)]">{t("home.end")}</div>
             )}
           </div>
         </>

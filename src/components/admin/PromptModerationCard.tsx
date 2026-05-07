@@ -24,9 +24,10 @@ import {
 } from "@/components/ui/Dialog";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
-import { rejectSchema, type RejectInput } from "@/lib/validators";
+import { makeRejectSchema, type RejectInput } from "@/lib/validators";
 import { formatDate } from "@/lib/format";
 import type { Prompt } from "@/lib/types";
+import { useT } from "@/lib/i18n/I18nProvider";
 
 const statusVariant = (s: Prompt["status"]) =>
   s === "approved" ? "success" :
@@ -37,36 +38,38 @@ const statusVariant = (s: Prompt["status"]) =>
 
 export function PromptModerationCard({ prompt }: { prompt: Prompt }) {
   const qc = useQueryClient();
+  const { t } = useT();
+  const rejectSchema = React.useMemo(() => makeRejectSchema(t), [t]);
   const [rejectOpen, setRejectOpen] = React.useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "pending"] });
 
   const approve = useMutation({
     mutationFn: () => adminApi.approve(prompt.id),
-    onSuccess: () => { toast.success("Prompt aprobado"); invalidate(); },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onSuccess: () => { toast.success(t("admin.moderationApprove")); invalidate(); },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const block = useMutation({
     mutationFn: () => adminApi.block(prompt.id),
-    onSuccess: () => { toast.success("Prompt bloqueado"); invalidate(); },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onSuccess: () => { toast.success(t("admin.moderationBlock")); invalidate(); },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const hide = useMutation({
     mutationFn: () => adminApi.hide(prompt.id),
-    onSuccess: () => { toast.success("Prompt oculto"); invalidate(); },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onSuccess: () => { toast.success(t("admin.moderationHide")); invalidate(); },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const reject = useMutation({
     mutationFn: (input: RejectInput) => adminApi.reject(prompt.id, input.rejection_reason),
     onSuccess: () => {
-      toast.success("Prompt rechazado");
+      toast.success(t("admin.moderationReject"));
       setRejectOpen(false);
       invalidate();
     },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Error"),
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : t("common.genericError")),
   });
 
   const {
@@ -106,7 +109,7 @@ export function PromptModerationCard({ prompt }: { prompt: Prompt }) {
                 </Link>
               )}
             </div>
-            <Badge variant={statusVariant(prompt.status)}>{prompt.status}</Badge>
+            <Badge variant={statusVariant(prompt.status)}>{t(`promptStatus.${prompt.status}`)}</Badge>
           </div>
 
           <p className="text-sm text-[var(--color-fg-muted)] line-clamp-3 font-mono">{prompt.prompt_text}</p>
@@ -114,7 +117,7 @@ export function PromptModerationCard({ prompt }: { prompt: Prompt }) {
           {prompt.moderation_reason && (
             <div className="rounded-md bg-[var(--color-warning-bg)] text-[var(--color-warning-fg)] p-2 text-xs flex items-start gap-2">
               <AlertCircle className="h-3.5 w-3.5 mt-0.5" />
-              <span>Filtro: {prompt.moderation_reason}</span>
+              <span>{t("admin.filterFlag", { reason: prompt.moderation_reason })}</span>
             </div>
           )}
 
@@ -128,27 +131,27 @@ export function PromptModerationCard({ prompt }: { prompt: Prompt }) {
           <div className="flex flex-wrap gap-2 pt-1">
             {(prompt.status === "pending" || prompt.status === "blocked") && (
               <Button onClick={() => approve.mutate()} loading={approve.isPending}>
-                <CheckCircle2 className="h-4 w-4" /> Aprobar
+                <CheckCircle2 className="h-4 w-4" /> {t("promptDetail.approve")}
               </Button>
             )}
             {prompt.status !== "rejected" && (
               <Button variant="secondary" onClick={() => setRejectOpen(true)}>
-                <Ban className="h-4 w-4" /> Rechazar
+                <Ban className="h-4 w-4" /> {t("promptDetail.reject")}
               </Button>
             )}
             {prompt.status !== "blocked" && (
               <Button variant="ghost" onClick={() => block.mutate()} loading={block.isPending}>
-                <Ban className="h-4 w-4" /> Bloquear
+                <Ban className="h-4 w-4" /> {t("promptDetail.block")}
               </Button>
             )}
             {prompt.status === "approved" && (
               <Button variant="ghost" onClick={() => hide.mutate()} loading={hide.isPending}>
-                <EyeOff className="h-4 w-4" /> Ocultar
+                <EyeOff className="h-4 w-4" /> {t("promptDetail.hide")}
               </Button>
             )}
             <Link href={`/prompts/${prompt.slug}`} target="_blank">
               <Button variant="ghost">
-                <Eye className="h-4 w-4" /> Ver
+                <Eye className="h-4 w-4" /> {t("common.view")}
               </Button>
             </Link>
           </div>
@@ -158,14 +161,14 @@ export function PromptModerationCard({ prompt }: { prompt: Prompt }) {
       <Dialog open={rejectOpen} onOpenChange={(open) => { setRejectOpen(open); if (!open) reset(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rechazar prompt</DialogTitle>
+            <DialogTitle>{t("promptDetail.rejectTitle")}</DialogTitle>
             <DialogDescription>
-              El usuario verá el motivo en su panel. Sé claro y constructivo.
+              {t("promptDetail.rejectDescription")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit((d) => reject.mutate(d))} className="space-y-4">
             <div>
-              <Label htmlFor="rejection_reason">Motivo</Label>
+              <Label htmlFor="rejection_reason">{t("promptDetail.rejectReasonLabel")}</Label>
               <Textarea
                 id="rejection_reason"
                 rows={4}
@@ -175,8 +178,8 @@ export function PromptModerationCard({ prompt }: { prompt: Prompt }) {
               <FieldError message={errors.rejection_reason?.message} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setRejectOpen(false)}>Cancelar</Button>
-              <Button type="submit" loading={reject.isPending} variant="danger">Rechazar</Button>
+              <Button type="button" variant="ghost" onClick={() => setRejectOpen(false)}>{t("common.cancel")}</Button>
+              <Button type="submit" loading={reject.isPending} variant="danger">{t("promptDetail.reject")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

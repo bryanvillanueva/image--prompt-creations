@@ -19,6 +19,7 @@ import { qk } from "@/lib/queries/keys";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { formatDate } from "@/lib/format";
 import type { PublicUser, Role } from "@/lib/types";
+import { useT, type TFn } from "@/lib/i18n/I18nProvider";
 
 type Mut = {
   suspend: (id: number) => void;
@@ -32,10 +33,12 @@ function UserRow({
   u,
   currentUserId,
   mut,
+  t,
 }: {
   u: PublicUser;
   currentUserId: number | undefined;
   mut: Mut;
+  t: TFn;
 }) {
   const [newRole, setNewRole] = useState<Role>(u.role);
   const [limitStr, setLimitStr] = useState(String(u.upload_limit_per_day));
@@ -62,20 +65,20 @@ function UserRow({
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => { if (confirm(`¿Suspender a @${u.username}?`)) mut.suspend(u.id); }}
+              onClick={() => { if (confirm(t("admin.userSuspendConfirm", { username: u.username }))) mut.suspend(u.id); }}
               loading={mut.isPending}
             >
-              Suspender
+              {t("admin.userSuspend")}
             </Button>
           )}
           {u.status === "suspended" && (
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => { if (confirm(`¿Reactivar a @${u.username}?`)) mut.reactivate(u.id); }}
+              onClick={() => { if (confirm(t("admin.userReactivateConfirm", { username: u.username }))) mut.reactivate(u.id); }}
               loading={mut.isPending}
             >
-              Reactivar
+              {t("admin.userReactivate")}
             </Button>
           )}
           {u.id !== currentUserId && (
@@ -96,7 +99,7 @@ function UserRow({
                 onClick={() => mut.changeRole(u.id, newRole)}
                 loading={mut.isPending}
               >
-                Rol
+                {t("admin.userRoleBtn")}
               </Button>
             </div>
           )}
@@ -114,7 +117,7 @@ function UserRow({
               onClick={() => mut.changeLimit(u.id, limitNum)}
               loading={mut.isPending}
             >
-              Límite
+              {t("admin.userLimitBtn")}
             </Button>
           </div>
         </div>
@@ -128,6 +131,7 @@ export default function AdminUsersPage() {
   const [status, setStatus] = useState("");
   const qc = useQueryClient();
   const { role, user: currentUser } = useAuth();
+  const { t } = useT();
   const isAdmin = role === "admin";
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -136,29 +140,29 @@ export default function AdminUsersPage() {
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "users"] });
-  const onError = (e: unknown) => toast.error(e instanceof ApiError ? e.message : "Error");
+  const onError = (e: unknown) => toast.error(e instanceof ApiError ? e.message : t("common.genericError"));
 
   const suspend = useMutation({
     mutationFn: (id: number) => adminApi.suspendUser(id),
-    onSuccess: () => { toast.success("Usuario suspendido"); invalidate(); },
+    onSuccess: () => { toast.success(t("admin.userSuspended")); invalidate(); },
     onError,
   });
 
   const reactivate = useMutation({
     mutationFn: (id: number) => adminApi.reactivateUser(id),
-    onSuccess: () => { toast.success("Usuario reactivado"); invalidate(); },
+    onSuccess: () => { toast.success(t("admin.userReactivated")); invalidate(); },
     onError,
   });
 
   const changeRole = useMutation({
     mutationFn: ({ id, role }: { id: number; role: Role }) => adminApi.changeUserRole(id, role),
-    onSuccess: () => { toast.success("Rol actualizado"); invalidate(); },
+    onSuccess: () => { toast.success(t("admin.userRoleUpdated")); invalidate(); },
     onError,
   });
 
   const changeLimit = useMutation({
     mutationFn: ({ id, limit }: { id: number; limit: number }) => adminApi.changeUploadLimit(id, limit),
-    onSuccess: () => { toast.success("Límite de subida actualizado"); invalidate(); },
+    onSuccess: () => { toast.success(t("admin.userLimitUpdated")); invalidate(); },
     onError,
   });
 
@@ -167,25 +171,25 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-h2">Usuarios</h2>
-        <p className="text-body text-[var(--color-fg-muted)]">Busca, filtra y gestiona cuentas de usuario.</p>
+        <h2 className="text-h2">{t("admin.usersTitle")}</h2>
+        <p className="text-body text-[var(--color-fg-muted)]">{t("admin.usersLead")}</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-fg-placeholder)]" />
           <Input
-            placeholder="Buscar por nombre, usuario o email"
+            placeholder={t("admin.usersSearchPlaceholder")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={status} onChange={(e) => setStatus(e.target.value)} className="md:w-44">
-          <option value="">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="suspended">Suspendidos</option>
-          <option value="deleted">Eliminados</option>
+          <option value="">{t("admin.usersAllStatuses")}</option>
+          <option value="active">{t("admin.usersStatusActive")}</option>
+          <option value="suspended">{t("admin.usersStatusSuspended")}</option>
+          <option value="deleted">{t("admin.usersStatusDeleted")}</option>
         </Select>
       </div>
 
@@ -194,7 +198,7 @@ export default function AdminUsersPage() {
       ) : error ? (
         <ErrorState onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <EmptyState title="Sin usuarios" />
+        <EmptyState title={t("admin.usersEmptyTitle")} />
       ) : (
         <div className="space-y-2">
           {items.map((u) =>
@@ -203,6 +207,7 @@ export default function AdminUsersPage() {
                 key={u.id}
                 u={u}
                 currentUserId={currentUser?.id}
+                t={t}
                 mut={{
                   suspend: (id) => suspend.mutate(id),
                   reactivate: (id) => reactivate.mutate(id),
