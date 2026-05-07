@@ -20,9 +20,8 @@ const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const [optimisticUser, setOptimisticUser] = React.useState<PublicUser | null | undefined>(undefined);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<PublicUser | null>({
     queryKey: qk.auth.me,
     queryFn: async () => {
       try {
@@ -35,9 +34,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     staleTime: 60_000,
     retry: false,
+    refetchOnMount: "always",
   });
 
-  const user = optimisticUser !== undefined ? optimisticUser : data ?? null;
+  const user = data ?? null;
 
   const value: AuthContextValue = {
     user,
@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: user?.role ?? null,
     refresh: async () => {
       await refetch();
-      setOptimisticUser(undefined);
     },
     logout: async () => {
       try {
@@ -54,10 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // ignore — limpiamos igual
       }
-      setOptimisticUser(null);
+      queryClient.setQueryData(qk.auth.me, null);
       queryClient.clear();
     },
-    setUser: (u) => setOptimisticUser(u),
+    setUser: (u) => {
+      queryClient.setQueryData(qk.auth.me, u);
+      // Refetch in background so any server-side role/status changes win
+      queryClient.invalidateQueries({ queryKey: qk.auth.me });
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

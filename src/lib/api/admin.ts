@@ -7,6 +7,7 @@ import type {
   PromptStatus,
   PublicUser,
   Report,
+  Role,
   Severity,
   MatchType,
 } from "../types";
@@ -29,6 +30,11 @@ export const adminApi = {
   users: (filters: { q?: string; status?: string } = {}) =>
     api.get<PublicUser[]>("/admin/users", { query: filters }),
   suspendUser: (id: number) => api.patch<PublicUser>(`/admin/users/${id}/suspend`),
+  reactivateUser: (id: number) => api.patch<PublicUser>(`/admin/users/${id}/reactivate`),
+  changeUserRole: (id: number, role: Role) =>
+    api.patch<PublicUser>(`/admin/users/${id}/role`, { role }),
+  changeUploadLimit: (id: number, limit: number) =>
+    api.patch<PublicUser>(`/admin/users/${id}/upload-limit`, { limit }),
 
   modWords: () => api.get<ModerationWord[]>("/admin/moderation-words"),
   createModWord: (body: {

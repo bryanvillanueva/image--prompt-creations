@@ -89,7 +89,21 @@ export function NavBar() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>
                   <div className="font-medium text-[var(--color-fg)]">{user?.name}</div>
-                  <div className="text-xs">@{user?.username}</div>
+                  <div className="text-xs flex items-center gap-2">
+                    <span>@{user?.username}</span>
+                    {role && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
+                          role === "admin" || role === "moderator"
+                            ? "bg-[var(--color-fg)] text-white"
+                            : "bg-[var(--color-bg-subtle)] text-[var(--color-fg-muted)]",
+                        )}
+                      >
+                        {role}
+                      </span>
+                    )}
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
