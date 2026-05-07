@@ -1,52 +1,117 @@
 @import "tailwindcss";
-:root{
-  /* tokens */
-  --blue-5: #3b82f6;
-  --lime-3: #bef264;
 
-  --font-sans: "Untitled Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-               Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  --font-mono: "Söhne Mono", "Menlo", monospace, "Apple Color Emoji", "Segoe UI Emoji";
+@theme {
+  --font-sans: var(--font-geist-sans), Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "Roboto Mono", Menlo, Monaco, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
+
+  --color-fg: #171717;
+  --color-fg-muted: #4d4d4d;
+  --color-fg-subtle: #666666;
+  --color-fg-placeholder: #808080;
+  --color-bg: #ffffff;
+  --color-bg-subtle: #fafafa;
+  --color-border: #ebebeb;
+
+  --color-link: #0072f5;
+  --color-focus: hsla(212, 100%, 48%, 1);
+  --color-badge-blue-bg: #ebf5ff;
+  --color-badge-blue-fg: #0068d6;
+
+  --color-success-bg: #ecfdf5;
+  --color-success-fg: #047857;
+  --color-warning-bg: #fffbeb;
+  --color-warning-fg: #b45309;
+  --color-danger-bg: #fef2f2;
+  --color-danger-fg: #b91c1c;
+
+  --color-ship: #ff5b4f;
+  --color-preview: #de1d8d;
+  --color-develop: #0a72ef;
 }
 
-/* Fondo general con degradado */
-@layer base{
-  html, body{
-    min-height: 100%;
-    background: linear-gradient(120deg, var(--blue-5), var(--lime-3));
-    background-attachment: fixed; /* que no “salte” al hacer scroll */
-    color: #0a0a0a;
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  body{ font-family: var(--font-sans); }
-  code, pre{ font-family: var(--font-mono); }
+
+  body { min-height: 100dvh; }
+
+  ::selection { background: hsla(0, 0%, 95%, 1); color: var(--color-fg); }
+
+  a { color: inherit; text-decoration: none; }
+
+  code, pre, kbd, samp { font-family: var(--font-mono); }
+
+  h1, h2, h3, h4 { font-weight: 600; line-height: 1.1; }
+  h1 { font-size: 3rem; letter-spacing: -2.4px; }
+  h2 { font-size: 2.5rem; letter-spacing: -2.4px; }
+  h3 { font-size: 2rem; letter-spacing: -1.28px; line-height: 1.2; }
+  h4 { font-size: 1.5rem; letter-spacing: -0.96px; line-height: 1.25; }
+
+  /* Focus consistente en interactivos */
+  :where(button, a, input, textarea, select, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  /* Inputs base — sin border CSS, usamos shadow */
+  input, textarea, select {
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+  input::placeholder, textarea::placeholder { color: var(--color-fg-placeholder); }
 }
 
-/* Cards blancas para contraste sobre el fondo degradado */
-.card{
-  @apply rounded-2xl border border-black/5 bg-white shadow-sm;
+@layer utilities {
+  .shadow-border { box-shadow: rgba(0, 0, 0, 0.08) 0 0 0 1px; }
+  .shadow-ring-light { box-shadow: rgb(235, 235, 235) 0 0 0 1px; }
+  .shadow-card {
+    box-shadow:
+      rgba(0, 0, 0, 0.08) 0 0 0 1px,
+      rgba(0, 0, 0, 0.04) 0 2px 2px,
+      rgba(0, 0, 0, 0.04) 0 8px 8px -8px;
+  }
+  .shadow-card-hover {
+    box-shadow:
+      rgba(0, 0, 0, 0.10) 0 0 0 1px,
+      rgba(0, 0, 0, 0.06) 0 4px 8px,
+      rgba(0, 0, 0, 0.04) 0 12px 16px -8px;
+  }
+
+  .container-app {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 1200px;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) { .container-app { padding-inline: 1.5rem; } }
+  @media (min-width: 1024px) { .container-app { padding-inline: 2rem; } }
+
+  .text-display { font-size: 3rem; font-weight: 600; line-height: 1.05; letter-spacing: -2.4px; }
+  .text-h1 { font-size: 2.5rem; font-weight: 600; line-height: 1.1; letter-spacing: -2.4px; }
+  .text-h2 { font-size: 2rem; font-weight: 600; line-height: 1.2; letter-spacing: -1.28px; }
+  .text-h3 { font-size: 1.5rem; font-weight: 600; line-height: 1.25; letter-spacing: -0.96px; }
+  .text-body { font-size: 1rem; line-height: 1.5; }
+  .text-body-lg { font-size: 1.125rem; line-height: 1.55; }
+  .text-caption { font-size: 0.75rem; line-height: 1.33; }
+  .text-mono-label { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
 }
 
-/* Utilidad por si quieres usar el gradiente en bandas específicas */
-.bg-hero{ background: linear-gradient(120deg, var(--blue-5), var(--lime-3)); }
+/* Mason grid with CSS columns */
+.masonry { column-gap: 1rem; column-count: 1; }
+@media (min-width: 640px) { .masonry { column-count: 2; } }
+@media (min-width: 1024px) { .masonry { column-count: 3; } }
+@media (min-width: 1280px) { .masonry { column-count: 4; } }
+.masonry > * { break-inside: avoid; margin-bottom: 1rem; }
 
-/* Contenedor responsivo con padding lateral consistente */
-.container-p {
-  /* ancho y centrado */
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 80rem; /* ~1280px (7xl aprox) */
-  /* padding lateral por breakpoint */
-  padding-left: 1rem;   /* px-4 */
-  padding-right: 1rem;
-}
-@media (min-width: 768px) {
-  .container-p { padding-left: 1.5rem; padding-right: 1.5rem; } /* md:px-6 */
-}
-@media (min-width: 1024px) {
-  .container-p { padding-left: 2rem; padding-right: 2rem; }     /* lg:px-8 */
-}
-
-/* Separación vertical estándar para las páginas */
-.page-pad-y { padding-top: 1.5rem; padding-bottom: 2rem; }       /* py-6 ~ py-8 */
-@media (min-width: 768px) { .page-pad-y { padding-top: 2rem; padding-bottom: 2.5rem; } }
-@media (min-width: 1024px){ .page-pad-y { padding-top: 2.5rem; padding-bottom: 3rem; } }
+/* Smooth fade-in for content */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+.animate-fade-in { animation: fadeIn 200ms ease-out both; }

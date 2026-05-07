@@ -1,113 +1,122 @@
 "use client";
-import { useMemo, useState } from "react";
-import SearchableDropdown from "@/components/ui/SearchableDropdown";
-import MultiSearchableDropdown from "@/components/ui/MultiSearchableDropdown";
-import { IMAGE_TYPES, IMAGE_STYLES } from "@/data/filters";
-import { X } from "lucide-react";
+import * as React from "react";
+import { Search, X } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
+import { useQuery } from "@tanstack/react-query";
+import { taxonomiesApi } from "@/lib/api/taxonomies";
+import { qk } from "@/lib/queries/keys";
+import { MODELS, SORT_OPTIONS } from "@/lib/constants";
+import type { SortOption } from "@/lib/types";
 
-export type FiltersState = {
-  type: string;       // valor actual del tab (ES)
-  styles: string[];   // estilos seleccionados (ES)
-  query: string;      // búsqueda por texto
-};
+export interface Filters {
+  q: string;
+  category: string;
+  tag: string;
+  model: string;
+  sort: SortOption;
+}
 
-export default function FiltersBar({ value, onChange, resultsCount }: { value: FiltersState; onChange: (f: FiltersState) => void; resultsCount: number; }) {
-  const categoryItems = useMemo(() => ["Todos", ...IMAGE_TYPES.map((t) => t.es)], []);
-  const styleItems = useMemo(() => IMAGE_STYLES.map((s) => s.es), []);
+interface FiltersBarProps {
+  value: Filters;
+  onChange: (next: Filters) => void;
+}
 
-  const hasActiveFilters = value.type !== "Todos" || value.styles.length > 0 || value.query.trim() !== "";
-  const clear = () => onChange({ type: "Todos", styles: [], query: "" });
+export function FiltersBar({ value, onChange }: FiltersBarProps) {
+  const [localQ, setLocalQ] = React.useState(value.q);
+  React.useEffect(() => setLocalQ(value.q), [value.q]);
 
-  const removeCategory = () => onChange({ ...value, type: "Todos" });
-  const removeStyle = (style: string) => onChange({ ...value, styles: value.styles.filter(s => s !== style) });
-  const removeQuery = () => onChange({ ...value, query: "" });
+  const { data: cats } = useQuery({
+    queryKey: qk.taxonomies.categories,
+    queryFn: () => taxonomiesApi.categories().then((r) => r.data),
+    staleTime: 5 * 60_000,
+  });
+  const { data: tags } = useQuery({
+    queryKey: qk.taxonomies.tags,
+    queryFn: () => taxonomiesApi.tags().then((r) => r.data),
+    staleTime: 5 * 60_000,
+  });
+
+  // Debounce búsqueda
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      if (localQ !== value.q) onChange({ ...value, q: localQ });
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localQ]);
+
+  const isFiltered =
+    !!value.category || !!value.tag || !!value.model || value.sort !== "recent" || !!value.q;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-6 sticky top-4 z-30">
-      <div className="p-4">
-        {/* Header compact */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold text-gray-900">Explorar</h1>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-              {resultsCount}
-            </span>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative mb-4">
-          <input
-            value={value.query}
-            onChange={(e) => onChange({ ...value, query: e.target.value })}
-            placeholder="Buscar imágenes..."
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-colors"
-          />
-          {value.query && (
-            <button
-              onClick={removeQuery}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Filters Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-2">Categoría</label>
-            <SearchableDropdown
-              label="categorías"
-              placeholder="Todas las categorías"
-              items={categoryItems}
-              value={value.type}
-              onChange={(type) => onChange({ ...value, type })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-2">Estilos</label>
-            <MultiSearchableDropdown
-              label="estilos"
-              placeholder="Todos los estilos"
-              items={styleItems}
-              values={value.styles}
-              onChange={(styles) => onChange({ ...value, styles })}
-            />
-          </div>
-        </div>
-
-        {/* Active Filters Pills */}
-        {hasActiveFilters && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {value.type !== "Todos" && (
-              <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                {value.type}
-                <button onClick={removeCategory} className="text-blue-600 hover:text-blue-800">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-            {value.styles.map(style => (
-              <span key={style} className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                {style}
-                <button onClick={() => removeStyle(style)} className="text-green-600 hover:text-green-800">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Clear all button */}
-        {hasActiveFilters && (
-          <button
-            onClick={clear}
-            className="w-full text-xs text-red-600 hover:text-red-700 font-medium py-2 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+    <div className="bg-white rounded-xl shadow-card p-4 mb-6 flex flex-col gap-3 md:flex-row md:items-center">
+      <div className="relative flex-1 min-w-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-fg-placeholder)]" />
+        <Input
+          type="search"
+          placeholder="Buscar por título o contenido del prompt…"
+          value={localQ}
+          onChange={(e) => setLocalQ(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      <div className="grid grid-cols-2 md:flex md:items-center gap-2">
+        <Select
+          aria-label="Categoría"
+          value={value.category}
+          onChange={(e) => onChange({ ...value, category: e.target.value })}
+          className="md:w-44"
+        >
+          <option value="">Todas las categorías</option>
+          {cats?.map((c) => (
+            <option key={c.id} value={c.slug}>{c.name}</option>
+          ))}
+        </Select>
+        <Select
+          aria-label="Tag"
+          value={value.tag}
+          onChange={(e) => onChange({ ...value, tag: e.target.value })}
+          className="md:w-40"
+        >
+          <option value="">Todos los tags</option>
+          {tags?.map((t) => (
+            <option key={t.id} value={t.slug}>{t.name}</option>
+          ))}
+        </Select>
+        <Select
+          aria-label="Modelo"
+          value={value.model}
+          onChange={(e) => onChange({ ...value, model: e.target.value })}
+          className="md:w-44"
+        >
+          <option value="">Todos los modelos</option>
+          {MODELS.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </Select>
+        <Select
+          aria-label="Orden"
+          value={value.sort}
+          onChange={(e) => onChange({ ...value, sort: e.target.value as SortOption })}
+          className="md:w-36"
+        >
+          {SORT_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </Select>
+        {isFiltered && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange({ q: "", category: "", tag: "", model: "", sort: "recent" })}
+            className="md:ml-1"
+            aria-label="Limpiar filtros"
+            title="Limpiar filtros"
           >
-            Limpiar todos los filtros
-          </button>
+            <X className="h-4 w-4" /> Limpiar
+          </Button>
         )}
       </div>
     </div>

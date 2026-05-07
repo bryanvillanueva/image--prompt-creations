@@ -1,33 +1,40 @@
 "use client";
-import * as Tabs from "@radix-ui/react-tabs";
-import { cn } from "./Button";
+import * as React from "react";
+import * as RTabs from "@radix-ui/react-tabs";
+import { cn } from "@/lib/cn";
 
-export function UITabs({
-  value,
-  onValueChange,
-  tabs,
-}: {
-  value: string;
-  onValueChange: (v: string) => void;
-  tabs: { value: string; label: string }[];
-}) {
-  return (
-    <Tabs.Root value={value} onValueChange={onValueChange}>
-      <Tabs.List className="flex w-full flex-wrap gap-2">
-        {tabs.map((t) => (
-          <Tabs.Trigger
-            key={t.value}
-            value={t.value}
-            className={cn(
-              "rounded-full border px-4 py-1.5 text-sm",
-              "border-black/10 bg-white text-black shadow-sm",
-              "hover:bg-black/5 data-[state=active]:bg-black data-[state=active]:text-white"
-            )}
-          >
-            {t.label}
-          </Tabs.Trigger>
-        ))}
-      </Tabs.List>
-    </Tabs.Root>
-  );
-}
+export const Tabs = RTabs.Root;
+
+export const TabsList = React.forwardRef<
+  React.ElementRef<typeof RTabs.List>,
+  React.ComponentPropsWithoutRef<typeof RTabs.List>
+>(({ className, ...props }, ref) => (
+  <RTabs.List
+    ref={ref}
+    className={cn(
+      "inline-flex items-center gap-1 rounded-full bg-[var(--color-bg-subtle)] p-1 shadow-ring-light",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = "TabsList";
+
+export const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof RTabs.Trigger>,
+  React.ComponentPropsWithoutRef<typeof RTabs.Trigger>
+>(({ className, ...props }, ref) => (
+  <RTabs.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex h-7 items-center rounded-full px-3 text-sm font-medium text-[var(--color-fg-muted)] transition-colors",
+      "data-[state=active]:bg-white data-[state=active]:text-[var(--color-fg)] data-[state=active]:shadow-ring-light",
+      "hover:text-[var(--color-fg)]",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = "TabsTrigger";
+
+export const TabsContent = RTabs.Content;
