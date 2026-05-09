@@ -58,8 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     setUser: (u) => {
       queryClient.setQueryData(qk.auth.me, u);
-      // Refetch in background so any server-side role/status changes win
-      queryClient.invalidateQueries({ queryKey: qk.auth.me });
+      // Refetch every query so user-scoped fields (is_liked, is_saved, etc.)
+      // hydrate with the new auth context on the destination page.
+      queryClient.invalidateQueries();
     },
   };
 

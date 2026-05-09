@@ -30,6 +30,7 @@ import { SaveButton } from "@/components/prompt/SaveButton";
 import { ReportDialog } from "@/components/prompt/ReportDialog";
 import { ModerationBanner } from "@/components/prompt/ModerationBanner";
 import { ImageLightbox } from "@/components/gallery/ImageLightbox";
+import { LoginPromptDialog } from "@/components/auth/LoginPromptDialog";
 import { promptsApi } from "@/lib/api/prompts";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
@@ -44,17 +45,28 @@ export default function PromptDetailPage() {
   const slug = params.slug;
   const router = useRouter();
   const qc = useQueryClient();
-  const { user, role } = useAuth();
+  const { user, role, isAuthenticated, isLoading: authLoading } = useAuth();
   const { t } = useT();
   const rejectSchema = React.useMemo(() => makeRejectSchema(t), [t]);
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const [rejectOpen, setRejectOpen] = React.useState(false);
 
+  const showAuthGate = !authLoading && !isAuthenticated;
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.prompts.bySlug(slug),
     queryFn: () => promptsApi.bySlug(slug),
     retry: 1,
+    enabled: !showAuthGate,
   });
+
+  const handleAuthBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => promptsApi.remove(id),
@@ -100,7 +112,22 @@ export default function PromptDetailPage() {
     defaultValues: { rejection_reason: "" },
   });
 
-  if (isLoading) {
+  if (showAuthGate) {
+    return (
+      <>
+        <div aria-hidden className="min-h-[60vh]" />
+        <LoginPromptDialog
+          open
+          onOpenChange={() => {}}
+          next={`/prompts/${slug}`}
+          onBack={handleAuthBack}
+          dismissible={false}
+        />
+      </>
+    );
+  }
+
+  if (authLoading || isLoading) {
     return (
       <div className="flex justify-center py-24">
         <Spinner className="text-[var(--color-fg-muted)]" />

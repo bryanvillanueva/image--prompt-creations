@@ -28,11 +28,15 @@ export const promptsApi = {
   copy: (slug: string) =>
     api.post<{ ok: boolean; copied_count: number }>(`/prompts/${encodeURIComponent(slug)}/copy`),
 
-  like: (id: number) => api.post<{ ok: boolean }>(`/prompts/${id}/like`),
-  unlike: (id: number) => api.delete<{ ok: boolean }>(`/prompts/${id}/like`),
+  like: (id: number) =>
+    api.post<{ ok: boolean; likes_count: number }>(`/prompts/${id}/like`),
+  unlike: (id: number) =>
+    api.delete<{ ok: boolean; likes_count: number }>(`/prompts/${id}/like`),
 
-  save: (id: number) => api.post<{ ok: boolean }>(`/prompts/${id}/save`),
-  unsave: (id: number) => api.delete<{ ok: boolean }>(`/prompts/${id}/save`),
+  save: (id: number) =>
+    api.post<{ ok: boolean; saves_count: number }>(`/prompts/${id}/save`),
+  unsave: (id: number) =>
+    api.delete<{ ok: boolean; saves_count: number }>(`/prompts/${id}/save`),
 
   report: (id: number, body: { reason: string; description?: string }) =>
     api.post<{ ok: boolean }>(`/prompts/${id}/report`, body),

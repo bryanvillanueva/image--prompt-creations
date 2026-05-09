@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="min-h-dvh">
+      <body className="min-h-dvh" suppressHydrationWarning>
         <Providers>
           <Suspense>
             <NavBar />

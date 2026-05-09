@@ -5,17 +5,63 @@ import Image from "next/image";
 import { Heart, Bookmark, Copy } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ImageLightbox } from "@/components/gallery/ImageLightbox";
+import { LoginPromptDialog } from "@/components/auth/LoginPromptDialog";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { formatNumber } from "@/lib/format";
 import type { Prompt } from "@/lib/types";
 import { useT } from "@/lib/i18n/I18nProvider";
 
 export function PromptCard({ prompt }: { prompt: Prompt }) {
   const { t } = useT();
+  const { isAuthenticated, isLoading } = useAuth();
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = React.useState(false);
   const aspect = prompt.image?.width && prompt.image?.height
     ? prompt.image.width / prompt.image.height
     : 1;
   const imageAlt = prompt.image?.alt_text || prompt.title;
+  const detailHref = `/prompts/${prompt.slug}`;
+
+  const detailContent = (
+    <>
+      <h3 className="text-base font-semibold tracking-tight line-clamp-2 mb-2">
+        {prompt.title}
+      </h3>
+      <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-fg-muted)]">
+        {prompt.author && (
+          <div className="flex items-center gap-2 min-w-0">
+            <Avatar src={prompt.author.avatar_url} name={prompt.author.name} size={20} />
+            <span className="truncate">@{prompt.author.username}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="inline-flex items-center gap-1" title={t("promptCard.likes")}>
+            <Heart className="h-3.5 w-3.5" />
+            {formatNumber(prompt.likes_count)}
+          </span>
+          <span className="inline-flex items-center gap-1" title={t("promptCard.saves")}>
+            <Bookmark className="h-3.5 w-3.5" />
+            {formatNumber(prompt.saves_count)}
+          </span>
+          <span className="inline-flex items-center gap-1" title={t("promptCard.copies")}>
+            <Copy className="h-3.5 w-3.5" />
+            {formatNumber(prompt.copied_count)}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+
+  const handleGuardedClick = (e: React.MouseEvent) => {
+    if (isLoading) {
+      e.preventDefault();
+      return;
+    }
+    if (!isAuthenticated) {
+      e.preventDefault();
+      setAuthPromptOpen(true);
+    }
+  };
 
   return (
     <article className="group block bg-white rounded-xl shadow-card overflow-hidden transition-shadow hover:shadow-card-hover">
@@ -46,32 +92,8 @@ export function PromptCard({ prompt }: { prompt: Prompt }) {
         </div>
       )}
 
-      <Link href={`/prompts/${prompt.slug}`} className="block p-4">
-        <h3 className="text-base font-semibold tracking-tight line-clamp-2 mb-2">
-          {prompt.title}
-        </h3>
-        <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-fg-muted)]">
-          {prompt.author && (
-            <div className="flex items-center gap-2 min-w-0">
-              <Avatar src={prompt.author.avatar_url} name={prompt.author.name} size={20} />
-              <span className="truncate">@{prompt.author.username}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="inline-flex items-center gap-1" title={t("promptCard.likes")}>
-              <Heart className="h-3.5 w-3.5" />
-              {formatNumber(prompt.likes_count)}
-            </span>
-            <span className="inline-flex items-center gap-1" title={t("promptCard.saves")}>
-              <Bookmark className="h-3.5 w-3.5" />
-              {formatNumber(prompt.saves_count)}
-            </span>
-            <span className="inline-flex items-center gap-1" title={t("promptCard.copies")}>
-              <Copy className="h-3.5 w-3.5" />
-              {formatNumber(prompt.copied_count)}
-            </span>
-          </div>
-        </div>
+      <Link href={detailHref} onClick={handleGuardedClick} className="block p-4">
+        {detailContent}
       </Link>
 
       {prompt.image?.url && (
@@ -82,6 +104,12 @@ export function PromptCard({ prompt }: { prompt: Prompt }) {
           title={prompt.title}
         />
       )}
+
+      <LoginPromptDialog
+        open={authPromptOpen}
+        onOpenChange={setAuthPromptOpen}
+        next={detailHref}
+      />
     </article>
   );
 }

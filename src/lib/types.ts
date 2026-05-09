@@ -96,6 +96,8 @@ export interface Prompt {
   author: Author | null;
   category?: Category;
   saved_at?: string;
+  is_liked?: boolean;
+  is_saved?: boolean;
 }
 
 export interface PublicUser {

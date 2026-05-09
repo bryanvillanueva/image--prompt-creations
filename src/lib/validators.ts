@@ -13,6 +13,16 @@ export const makeLoginSchema = (t: TFn) =>
   });
 export type LoginInput = z.infer<ReturnType<typeof makeLoginSchema>>;
 
+const makeStrongPasswordSchema = (t: TFn) =>
+  z
+    .string()
+    .min(8, t("validation.passwordMin"))
+    .max(128, t("validation.passwordMax"))
+    .refine((v) => /[a-z]/.test(v), { message: t("validation.passwordLower") })
+    .refine((v) => /[A-Z]/.test(v), { message: t("validation.passwordUpper") })
+    .refine((v) => /\d/.test(v), { message: t("validation.passwordDigit") })
+    .refine((v) => /[^A-Za-z0-9]/.test(v), { message: t("validation.passwordSymbol") });
+
 export const makeRegisterSchema = (t: TFn) =>
   z.object({
     name: z.string().min(1, t("validation.required")).max(120),
@@ -22,9 +32,26 @@ export const makeRegisterSchema = (t: TFn) =>
       .max(40, t("validation.usernameMax"))
       .regex(/^[a-zA-Z0-9._-]+$/, t("validation.usernameRegex")),
     email: z.string().email(t("validation.emailInvalid")),
-    password: z.string().min(8, t("validation.passwordMin")).max(128),
+    password: makeStrongPasswordSchema(t),
   });
 export type RegisterInput = z.infer<ReturnType<typeof makeRegisterSchema>>;
+
+export const makeChangePasswordSchema = (t: TFn) =>
+  z
+    .object({
+      current_password: z.string().min(1, t("validation.required")),
+      new_password: makeStrongPasswordSchema(t),
+      confirm_password: z.string().min(1, t("validation.required")),
+    })
+    .refine((d) => d.new_password === d.confirm_password, {
+      message: t("validation.passwordMismatch"),
+      path: ["confirm_password"],
+    })
+    .refine((d) => d.new_password !== d.current_password, {
+      message: t("validation.passwordSameAsCurrent"),
+      path: ["new_password"],
+    });
+export type ChangePasswordInput = z.infer<ReturnType<typeof makeChangePasswordSchema>>;
 
 const makeFileSchema = (t: TFn) =>
   z
@@ -99,3 +126,24 @@ export const makeRejectSchema = (t: TFn) =>
     rejection_reason: z.string().min(3, t("validation.reason3")).max(500),
   });
 export type RejectInput = z.infer<ReturnType<typeof makeRejectSchema>>;
+
+export const makeProfileUpdateSchema = (t: TFn) =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("validation.required"))
+      .max(80, t("validation.profileNameMax")),
+    username: z
+      .string()
+      .trim()
+      .min(3, t("validation.usernameMin"))
+      .max(30, t("validation.profileUsernameMax"))
+      .regex(/^[a-zA-Z0-9_.-]+$/, t("validation.usernameRegex")),
+    email: z
+      .string()
+      .trim()
+      .email(t("validation.emailInvalid")),
+    bio: z.string().max(500, t("validation.bioMax")).or(z.literal("")),
+  });
+export type ProfileUpdateInput = z.infer<ReturnType<typeof makeProfileUpdateSchema>>;
