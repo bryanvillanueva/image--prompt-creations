@@ -21,6 +21,7 @@ const styles: Record<PromptStatus, { bg: string; fg: string; icon: React.ReactNo
 export function ModerationBanner({ status, reason, rejectionReason }: Props) {
   const { t } = useT();
   const s = styles[status];
+  if (!s) return null;
   const detail = rejectionReason ?? reason;
   return (
     <div
