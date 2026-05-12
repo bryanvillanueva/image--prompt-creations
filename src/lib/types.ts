@@ -113,6 +113,7 @@ export interface PublicUser {
   upload_limit_per_day: number;
   trust_level: TrustLevel;
   created_at: string;
+  total_prompts: number;
 }
 
 export interface Report {

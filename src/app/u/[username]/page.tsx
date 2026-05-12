@@ -47,7 +47,7 @@ export default function PublicProfilePage() {
   }
 
   if (!data) return null;
-  const { user, prompts } = data.data;
+  const { user, total_prompts, prompts } = data.data;
   const isOwner = !!authUser && authUser.id === user.id;
 
   return (
@@ -70,7 +70,7 @@ export default function PublicProfilePage() {
           <div className="text-xs text-[var(--color-fg-muted)] mt-3">
             {t("publicProfile.memberSince", {
               date: formatDate(user.created_at),
-              count: prompts.length,
+              count: total_prompts,
             })}
           </div>
         </div>
