@@ -78,5 +78,40 @@ export const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3 MB
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const MAX_TAGS_PER_PROMPT = 20;
 
+// ---- Brand Kit ----
+
+export const BRAND_ASPECT_RATIOS = ["1:1", "4:5", "9:16", "16:9", "3:2"] as const;
+export type BrandAspectRatio = (typeof BRAND_ASPECT_RATIOS)[number];
+
+export interface FormatPreset {
+  id: string;
+  ratio: BrandAspectRatio;
+  width: number;
+  height: number;
+}
+
+// Visual size presets for the studio. Labels/platforms/prompt text live in
+// i18n under brands.formats.<id>.*; the prompt text is appended to the
+// instruction sent to the agent.
+export const FORMAT_PRESETS: FormatPreset[] = [
+  { id: "square_post", ratio: "1:1", width: 1080, height: 1080 },
+  { id: "portrait_post", ratio: "4:5", width: 1080, height: 1350 },
+  { id: "story", ratio: "9:16", width: 1080, height: 1920 },
+  { id: "landscape", ratio: "16:9", width: 1920, height: 1080 },
+  { id: "photo", ratio: "3:2", width: 1620, height: 1080 },
+];
+
+export const ASSET_TYPES = ["logo", "logo_variant", "example_material", "other"] as const;
+
+export const MAX_BRANDS_PER_USER = 5;
+export const MAX_ASSETS_PER_BRAND = 20;
+export const MAX_REFERENCE_ASSETS = 3;
+export const MAX_COLORS_PER_LIST = 8;
+export const MAX_TYPOGRAPHY_ENTRIES = 6;
+export const INSTRUCTION_MIN = 5;
+export const INSTRUCTION_MAX = 2000;
+export const GENERATION_POLL_MS = 4500;
+export const GENERATION_UI_TIMEOUT_MS = 120_000;
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";

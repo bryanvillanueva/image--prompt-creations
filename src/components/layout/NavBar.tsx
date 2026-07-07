@@ -2,7 +2,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Sparkles, Search, Plus, LogOut, User, Library, Shield, Menu } from "lucide-react";
+import { Sparkles, Search, Plus, LogOut, User, Library, Shield, Menu, Palette } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import {
@@ -125,6 +125,11 @@ export function NavBar() {
                     <Library className="h-4 w-4" /> {t("nav.saved")}
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/brands">
+                    <Palette className="h-4 w-4" /> {t("nav.myBrands")}
+                  </Link>
+                </DropdownMenuItem>
                 {isStaff && (
                   <>
                     <DropdownMenuSeparator />
@@ -195,6 +200,9 @@ export function NavBar() {
                 </Link>
                 <Link href="/me/saved" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
                   {t("nav.saved")}
+                </Link>
+                <Link href="/brands" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>
+                  {t("nav.myBrands")}
                 </Link>
                 {isStaff && (
                   <Link href="/admin/pending" className="px-3 py-2 rounded-md hover:bg-[var(--color-bg-subtle)]" onClick={() => setMobileOpen(false)}>

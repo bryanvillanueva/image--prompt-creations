@@ -3,6 +3,8 @@ import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_SIZE_BYTES,
   MAX_TAGS_PER_PROMPT,
+  MAX_COLORS_PER_LIST,
+  MAX_TYPOGRAPHY_ENTRIES,
 } from "./constants";
 import type { TFn } from "./i18n/I18nProvider";
 
@@ -126,6 +128,37 @@ export const makeRejectSchema = (t: TFn) =>
     rejection_reason: z.string().min(3, t("validation.reason3")).max(500),
   });
 export type RejectInput = z.infer<ReturnType<typeof makeRejectSchema>>;
+
+const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
+
+const makeColorListSchema = (t: TFn) =>
+  z
+    .array(z.string().regex(HEX_COLOR, t("validation.colorFormat")))
+    .max(MAX_COLORS_PER_LIST, t("validation.colorsMax"));
+
+export const makeBrandFormSchema = (t: TFn) =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(2, t("validation.brandNameLen"))
+      .max(120, t("validation.brandNameLen")),
+    description: z.string().max(2000, t("validation.brandDescriptionMax")).optional().or(z.literal("")),
+    industry: z.string().max(80, t("validation.brandFieldMax")).optional().or(z.literal("")),
+    tone_of_voice: z.string().max(255, t("validation.brandFieldMax")).optional().or(z.literal("")),
+    slogan: z.string().max(255, t("validation.brandFieldMax")).optional().or(z.literal("")),
+    typography: z
+      .array(
+        z.object({
+          role: z.string().trim().min(1, t("validation.required")).max(40, t("validation.brandFieldMax")),
+          font: z.string().trim().min(1, t("validation.required")).max(80, t("validation.fontMax")),
+        }),
+      )
+      .max(MAX_TYPOGRAPHY_ENTRIES, t("validation.typographyMax")),
+    primary_colors: makeColorListSchema(t),
+    secondary_colors: makeColorListSchema(t),
+  });
+export type BrandFormValues = z.infer<ReturnType<typeof makeBrandFormSchema>>;
 
 export const makeProfileUpdateSchema = (t: TFn) =>
   z.object({

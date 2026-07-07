@@ -162,6 +162,64 @@ export interface PromptListFilters {
   sort?: SortOption;
 }
 
+export type AssetType = "logo" | "logo_variant" | "example_material" | "other";
+export type GenerationStatus = "pending" | "processing" | "completed" | "failed";
+export type FeedbackRating = "like" | "dislike";
+
+export type BrandTypography = Record<string, string>;
+
+export interface Brand {
+  id: number;
+  user_id: number;
+  name: string;
+  description: string | null;
+  industry: string | null;
+  tone_of_voice: string | null;
+  slogan: string | null;
+  typography: BrandTypography | null;
+  primary_colors: string[] | null;
+  secondary_colors: string[] | null;
+  style_memory: string | null;
+  style_memory_updated_at: string | null;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+  assets?: BrandAsset[];
+}
+
+export interface BrandAsset {
+  id: number;
+  brand_id: number;
+  asset_type: AssetType;
+  image_url: string;
+  storage_key: string;
+  title: string | null;
+  notes: string | null;
+  width: number | null;
+  height: number | null;
+  file_size_bytes: number | null;
+  mime_type: string | null;
+  created_at: string;
+}
+
+export interface BrandGeneration {
+  id: number;
+  brand_id: number;
+  status: GenerationStatus;
+  instruction: string;
+  aspect_ratio: string;
+  composed_prompt: string | null;
+  agent_notes: string | null;
+  image_url: string | null;
+  error_message: string | null;
+  feedback_rating: FeedbackRating | null;
+  feedback_comment: string | null;
+  feedback_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
   meta?: PaginationMeta & {

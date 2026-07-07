@@ -21,6 +21,13 @@ export const qk = {
       ["me", "prompts", filters] as const,
     saved: ["me", "saved"] as const,
   },
+  brands: {
+    all: ["brands"] as const,
+    list: ["brands", "list"] as const,
+    detail: (id: number) => ["brands", "detail", id] as const,
+    generations: (id: number, page: number) => ["brands", id, "generations", page] as const,
+    generation: (id: number, genId: number) => ["brands", id, "generation", genId] as const,
+  },
   admin: {
     pending: (filters: { status?: PromptStatus; page?: number; limit?: number }) =>
       ["admin", "pending", filters] as const,
