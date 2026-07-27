@@ -220,6 +220,59 @@ export interface BrandGeneration {
   created_at: string;
 }
 
+export type SocialPlatform = "instagram" | "facebook";
+export type SocialConnectionStatus = "pending_page" | "active" | "expired";
+export type SocialPostStatus =
+  | "pending"
+  | "publishing"
+  | "published"
+  | "partial"
+  | "failed"
+  | "cancelled";
+
+export interface SocialConnection {
+  status: SocialConnectionStatus;
+  page_id: string | null;
+  page_name: string | null;
+  ig_user_id: string | null;
+  ig_username: string | null;
+  connected_by: number;
+  token_expires_at: string | null;
+  updated_at: string;
+}
+
+export interface SocialPage {
+  id: string;
+  name: string;
+  ig_user_id: string | null;
+  ig_username: string | null;
+}
+
+export interface SocialPostResult {
+  ok: boolean;
+  id?: string;
+  error?: string;
+}
+
+export interface ScheduledPost {
+  id: number;
+  brand_id: number;
+  generation_id: number | null;
+  image_url: string;
+  caption: string | null;
+  platforms: SocialPlatform[];
+  is_ai_generated: boolean;
+  publish_at: string | null;
+  status: SocialPostStatus;
+  ig_media_id: string | null;
+  fb_post_id: string | null;
+  results: Partial<Record<SocialPlatform, SocialPostResult>> | null;
+  error_message: string | null;
+  attempts: number;
+  published_at: string | null;
+  created_at: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
   meta?: PaginationMeta & {

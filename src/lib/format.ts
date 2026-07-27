@@ -25,6 +25,37 @@ export function formatRelativeDate(input: string | Date): string {
   return formatDate(d);
 }
 
+// Social-post timestamps come from the backend as "YYYY-MM-DD HH:MM:SS" in UTC
+// (see context/social_publishing_meta.md: publish_at "-05:00 09:00" is stored as "14:00:00").
+export function parseServerUtc(input: string): Date {
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(input)) {
+    return new Date(`${input.replace(" ", "T")}Z`);
+  }
+  return new Date(input);
+}
+
+export function formatDateTime(input: string | Date): string {
+  const d = typeof input === "string" ? parseServerUtc(input) : input;
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("es", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// "2026-08-01T09:00" (datetime-local) → "2026-08-01T09:00:00-05:00" (ISO with the
+// browser's timezone offset, as the publishing API requires).
+export function localInputToIso(local: string): string {
+  const d = new Date(local);
+  const off = -d.getTimezoneOffset();
+  const sign = off >= 0 ? "+" : "-";
+  const pad = (n: number) => String(Math.abs(n)).padStart(2, "0");
+  return `${local}:00${sign}${pad(Math.trunc(Math.abs(off) / 60))}:${pad(Math.abs(off) % 60)}`;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
