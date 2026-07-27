@@ -83,8 +83,13 @@ export default function BrandStudioPage() {
             </div>
           ) : (
             <>
-              {generations.map((gen) => (
-                <GenerationCard key={gen.id} brandId={brandId} generation={gen} />
+              {generations.map((gen, idx) => (
+                <GenerationCard
+                  key={gen.id}
+                  brandId={brandId}
+                  generation={gen}
+                  defaultExpanded={page === 1 && idx === 0}
+                />
               ))}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-3 pt-2">

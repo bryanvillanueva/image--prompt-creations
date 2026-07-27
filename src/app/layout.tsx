@@ -6,6 +6,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { NavBar } from "@/components/layout/NavBar";
 import { Footer } from "@/components/layout/Footer";
+import { SocialConnectRedirect } from "@/components/social/SocialConnectRedirect";
 
 export const metadata: Metadata = {
   title: "Promptlib — Biblioteca comunitaria de prompts IA",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense>
             <NavBar />
           </Suspense>
+          <SocialConnectRedirect />
           <main className="container-app py-8 md:py-10">{children}</main>
           <Footer />
         </Providers>

@@ -113,5 +113,11 @@ export const INSTRUCTION_MAX = 2000;
 export const GENERATION_POLL_MS = 4500;
 export const GENERATION_UI_TIMEOUT_MS = 120_000;
 
+// ---- Social publishing (Meta) ----
+
+export const CAPTION_MAX = 2200;
+export const POST_POLL_MS = 4000;
+export const POST_UI_TIMEOUT_MS = 60_000;
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";

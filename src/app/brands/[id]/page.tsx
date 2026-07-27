@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 import { AssetManager } from "@/components/brand/AssetManager";
+import { SocialConnectionCard } from "@/components/social/SocialConnectionCard";
 import { brandsApi } from "@/lib/api/brands";
 import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
@@ -152,6 +153,7 @@ export default function BrandDetailPage() {
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <SocialConnectionCard brandId={brand.id} />
           <Card>
             <CardBody className="space-y-2">
               <div className="flex items-center gap-2">
