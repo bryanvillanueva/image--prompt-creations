@@ -17,35 +17,13 @@ const MAX_BOX_HEIGHT = 520;
 
 // Sizes a box to the generation's aspect ratio, capping portrait formats so a
 // 9:16 story doesn't take over the whole column.
-function boxStyle(aspectRatio: string): React.CSSProperties {
+export function generationBoxStyle(aspectRatio: string): React.CSSProperties {
   const ratio = ratioToNumber(aspectRatio);
   if (!ratio) return { aspectRatio: "1 / 1", maxWidth: MAX_BOX_HEIGHT };
   return {
     aspectRatio: String(ratio),
     maxWidth: ratio < 1 ? Math.round(MAX_BOX_HEIGHT * ratio) : undefined,
   };
-}
-
-/** Shimmer placeholder shown while the agent is still generating the image. */
-export function GenerationImageSkeleton({
-  aspectRatio,
-  message,
-}: {
-  aspectRatio: string;
-  message?: string;
-}) {
-  return (
-    <div
-      className="relative mx-auto w-full overflow-hidden rounded-xl bg-[var(--color-bg-subtle)]"
-      style={boxStyle(aspectRatio)}
-    >
-      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--color-bg-subtle)] via-white/60 to-[var(--color-bg-subtle)]" />
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
-        <Spinner className="text-[var(--color-fg-muted)]" />
-        {message && <p className="text-sm text-[var(--color-fg-muted)]">{message}</p>}
-      </div>
-    </div>
-  );
 }
 
 interface GenerationImageProps {
@@ -94,10 +72,12 @@ export function GenerationImage({ src, alt, aspectRatio }: GenerationImageProps)
     <>
       <div
         className="group relative mx-auto w-full overflow-hidden rounded-xl bg-[var(--color-bg-subtle)]"
-        style={boxStyle(aspectRatio)}
+        style={generationBoxStyle(aspectRatio)}
       >
         {!loaded && (
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--color-bg-subtle)] via-white/60 to-[var(--color-bg-subtle)]" />
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="animate-shimmer h-full w-full bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+          </div>
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -106,8 +86,9 @@ export function GenerationImage({ src, alt, aspectRatio }: GenerationImageProps)
           onLoad={() => setLoaded(true)}
           onClick={() => setOpen(true)}
           className={cn(
-            "h-full w-full cursor-zoom-in object-cover transition-opacity duration-300",
-            loaded ? "opacity-100" : "opacity-0",
+            // Blur-up: the image lands softly instead of popping in.
+            "h-full w-full cursor-zoom-in object-cover transition-all duration-500 ease-out",
+            loaded ? "scale-100 opacity-100 blur-0" : "scale-[1.02] opacity-0 blur-md",
           )}
         />
         {loaded && (

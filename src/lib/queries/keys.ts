@@ -31,6 +31,7 @@ export const qk = {
     socialPages: (id: number) => ["brands", id, "social", "pages"] as const,
     posts: (id: number, page: number) => ["brands", id, "posts", page] as const,
     post: (id: number, postId: number) => ["brands", id, "post", postId] as const,
+    captionThread: (id: number, genId: number) => ["brands", id, "caption-thread", genId] as const,
   },
   admin: {
     pending: (filters: { status?: PromptStatus; page?: number; limit?: number }) =>

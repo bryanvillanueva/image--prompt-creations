@@ -248,6 +248,32 @@ export interface SocialPage {
   ig_username: string | null;
 }
 
+export type CaptionSource = "manual" | "agent" | "agent_edited";
+
+export interface CaptionSuggestion {
+  /** Body without hashtags. */
+  text: string;
+  /** Hashtags without the leading `#`. */
+  hashtags: string[];
+  platform: SocialPlatform | null;
+  /** Body + hashtags already composed and clamped to CAPTION_MAX: this is what goes to the textarea. */
+  full_text: string;
+}
+
+export interface CaptionMessage {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  captions: CaptionSuggestion[] | null;
+  created_at: string;
+}
+
+export interface CaptionThread {
+  thread_id: number;
+  generation_id: number;
+  messages: CaptionMessage[];
+}
+
 export interface SocialPostResult {
   ok: boolean;
   id?: string;

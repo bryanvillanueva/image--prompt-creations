@@ -115,3 +115,15 @@
 /* Smooth fade-in for content */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 .animate-fade-in { animation: fadeIn 200ms ease-out both; }
+
+/* Skeletons: light sweeping across the placeholder instead of a flat pulse */
+@keyframes shimmer { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+.animate-shimmer { animation: shimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+/* Soft breathing used by the blocks of the generation placeholder */
+@keyframes skeletonBreath { 0%, 100% { opacity: 0.85; } 50% { opacity: 0.55; } }
+.animate-breath { animation: skeletonBreath 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer, .animate-breath { animation: none; }
+}

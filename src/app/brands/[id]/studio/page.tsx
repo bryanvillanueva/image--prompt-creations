@@ -89,6 +89,7 @@ export default function BrandStudioPage() {
                   brandId={brandId}
                   generation={gen}
                   defaultExpanded={page === 1 && idx === 0}
+                  accentColors={brand.primary_colors}
                 />
               ))}
               {totalPages > 1 && (
