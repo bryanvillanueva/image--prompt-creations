@@ -1,5 +1,11 @@
 import { api } from "./client";
-import type { ScheduledPost, SocialConnection, SocialPage, SocialPlatform } from "../types";
+import type {
+  CaptionSource,
+  ScheduledPost,
+  SocialConnection,
+  SocialPage,
+  SocialPlatform,
+} from "../types";
 
 export interface CreatePostPayload {
   generation_id?: number;
@@ -8,6 +14,9 @@ export interface CreatePostPayload {
   platforms: SocialPlatform[];
   publish_at?: string;
   is_ai_generated?: boolean;
+  /** Traceability for the caption assistant; feeds the per-brand copy memory. */
+  caption_source?: CaptionSource;
+  caption_message_id?: number;
 }
 
 export const socialApi = {

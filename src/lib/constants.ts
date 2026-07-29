@@ -111,11 +111,19 @@ export const MAX_TYPOGRAPHY_ENTRIES = 6;
 export const INSTRUCTION_MIN = 5;
 export const INSTRUCTION_MAX = 2000;
 export const GENERATION_POLL_MS = 4500;
+/** Generations usually land at 30–60s; poll tighter from here on. */
+export const GENERATION_POLL_FAST_AFTER_MS = 20_000;
+export const GENERATION_POLL_FAST_MS = 2000;
 export const GENERATION_UI_TIMEOUT_MS = 120_000;
 
 // ---- Social publishing (Meta) ----
 
 export const CAPTION_MAX = 2200;
+/** Caption assistant: message length accepted by the backend. */
+export const CAPTION_CHAT_MIN = 2;
+export const CAPTION_CHAT_MAX = 500;
+/** Backend allows 40 requests / 10 min per user; on a 429 we lock the input this long. */
+export const CAPTION_COOLDOWN_MS = 60_000;
 export const POST_POLL_MS = 4000;
 export const POST_UI_TIMEOUT_MS = 60_000;
 

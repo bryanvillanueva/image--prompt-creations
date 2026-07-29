@@ -3,7 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Facebook, Instagram } from "lucide-react";
+import { ChevronDown, Facebook, Instagram, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -18,11 +18,12 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 import { useSocialConnection } from "./useSocialConnection";
+import { CaptionAssistant } from "./CaptionAssistant";
 import { socialApi } from "@/lib/api/social";
 import { ApiError } from "@/lib/api/client";
 import { CAPTION_MAX } from "@/lib/constants";
 import { formatDateTime, localInputToIso } from "@/lib/format";
-import type { SocialPlatform } from "@/lib/types";
+import type { CaptionSource, CaptionSuggestion, SocialPlatform } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { useT } from "@/lib/i18n/I18nProvider";
 
@@ -60,6 +61,9 @@ export function PublishPostDialog({
   const [platforms, setPlatforms] = React.useState<SocialPlatform[]>([]);
   const [schedule, setSchedule] = React.useState(false);
   const [scheduleAt, setScheduleAt] = React.useState("");
+  /** Last suggestion applied from the assistant, to tell `agent` from `agent_edited`. */
+  const [applied, setApplied] = React.useState<{ messageId: number; fullText: string } | null>(null);
+  const [assistantOpen, setAssistantOpen] = React.useState(false);
   const defaultsSet = React.useRef(false);
 
   const hasIg = !!connection?.ig_user_id;
@@ -76,10 +80,25 @@ export function PublishPostDialog({
     setSchedule(false);
     setScheduleAt("");
     setCaption("");
+    setApplied(null);
+    setAssistantOpen(false);
   }, [open, isActive, hasIg]);
 
   const togglePlatform = (p: SocialPlatform) =>
     setPlatforms((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
+
+  const applySuggestion = (suggestion: CaptionSuggestion, messageId: number) => {
+    setCaption(suggestion.full_text);
+    setApplied({ messageId, fullText: suggestion.full_text });
+  };
+
+  // manual → never touched the assistant; agent → applied and left as-is; agent_edited → tweaked after.
+  const captionSource: CaptionSource =
+    !applied || !caption.trim()
+      ? "manual"
+      : caption.trim() === applied.fullText.trim()
+        ? "agent"
+        : "agent_edited";
 
   const publishMutation = useMutation({
     mutationFn: () =>
@@ -88,6 +107,10 @@ export function PublishPostDialog({
         caption: caption.trim() || undefined,
         platforms,
         publish_at: schedule && scheduleAt ? localInputToIso(scheduleAt) : undefined,
+        caption_source: captionSource,
+        ...(captionSource !== "manual" && applied
+          ? { caption_message_id: applied.messageId }
+          : {}),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["brands", brandId, "posts"] });
@@ -109,10 +132,14 @@ export function PublishPostDialog({
 
   const scheduleInvalid = schedule && (!scheduleAt || Number.isNaN(new Date(scheduleAt).getTime()));
   const canSubmit = isActive && platforms.length > 0 && !scheduleInvalid;
+  // The assistant needs the generation as context, so it's off for raw-URL posts.
+  const showAssistant = isActive && generationId != null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        className={cn("max-h-[85vh] overflow-y-auto", showAssistant && "lg:max-w-3xl")}
+      >
         <DialogHeader>
           <DialogTitle>{t("social.publishTitle")}</DialogTitle>
           <DialogDescription>{t("social.publishDescription")}</DialogDescription>
@@ -136,114 +163,152 @@ export function PublishPostDialog({
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewUrl}
-              alt=""
-              className="max-h-56 w-full rounded-xl bg-[var(--color-bg-subtle)] object-contain"
-            />
-
-            <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor={`pub_caption_${brandId}`}>{t("social.captionLabel")}</Label>
-                <span
-                  className={cn(
-                    "text-xs",
-                    caption.length > CAPTION_MAX
-                      ? "text-[var(--color-danger-fg)]"
-                      : "text-[var(--color-fg-muted)]",
-                  )}
-                >
-                  {caption.length}/{CAPTION_MAX}
-                </span>
-              </div>
-              <Textarea
-                id={`pub_caption_${brandId}`}
-                rows={4}
-                maxLength={CAPTION_MAX}
-                placeholder={t("social.captionPlaceholder")}
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
+          <div
+            className={cn(
+              "grid gap-4",
+              showAssistant && "lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start",
+            )}
+          >
+            <div className="space-y-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt=""
+                className="max-h-56 w-full rounded-xl bg-[var(--color-bg-subtle)] object-contain"
               />
-            </div>
 
-            <div>
-              <Label>{t("social.platformsLabel")}</Label>
-              <div className="flex flex-col gap-2">
-                <label
-                  className={cn(
-                    "flex items-center gap-2 text-sm",
-                    hasIg ? "cursor-pointer" : "cursor-not-allowed opacity-50",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-[var(--color-fg)]"
-                    disabled={!hasIg}
-                    checked={platforms.includes("instagram")}
-                    onChange={() => togglePlatform("instagram")}
-                  />
-                  <Instagram className="h-4 w-4 text-[var(--color-fg-muted)]" />
-                  Instagram
-                  {hasIg ? (
-                    <span className="text-xs text-[var(--color-fg-muted)]">
-                      @{connection?.ig_username}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-[var(--color-fg-muted)]">
-                      {t("social.igUnavailable")}
-                    </span>
-                  )}
-                </label>
-                <label className="flex cursor-pointer items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-[var(--color-fg)]"
-                    checked={platforms.includes("facebook")}
-                    onChange={() => togglePlatform("facebook")}
-                  />
-                  <Facebook className="h-4 w-4 text-[var(--color-fg-muted)]" />
-                  Facebook
-                  <span className="text-xs text-[var(--color-fg-muted)]">
-                    {connection?.page_name}
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`pub_caption_${brandId}`}>{t("social.captionLabel")}</Label>
+                  <span
+                    className={cn(
+                      "text-xs",
+                      caption.length > CAPTION_MAX
+                        ? "text-[var(--color-danger-fg)]"
+                        : "text-[var(--color-fg-muted)]",
+                    )}
+                  >
+                    {caption.length}/{CAPTION_MAX}
                   </span>
-                </label>
-              </div>
-              {platforms.length === 0 && (
-                <p className="mt-1 text-xs text-[var(--color-danger-fg)]">
-                  {t("social.platformsRequired")}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-[var(--color-fg)]"
-                  checked={schedule}
-                  onChange={(e) => {
-                    setSchedule(e.target.checked);
-                    if (e.target.checked && !scheduleAt) setScheduleAt(nowAsLocalInput());
-                  }}
+                </div>
+                <Textarea
+                  id={`pub_caption_${brandId}`}
+                  rows={4}
+                  maxLength={CAPTION_MAX}
+                  placeholder={t("social.captionPlaceholder")}
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
                 />
-                {t("social.scheduleLabel")}
-              </label>
-              {schedule && (
-                <>
-                  <Input
-                    type="datetime-local"
-                    value={scheduleAt}
-                    min={nowAsLocalInput()}
-                    onChange={(e) => setScheduleAt(e.target.value)}
+              </div>
+
+              <div>
+                <Label>{t("social.platformsLabel")}</Label>
+                <div className="flex flex-col gap-2">
+                  <label
+                    className={cn(
+                      "flex items-center gap-2 text-sm",
+                      hasIg ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[var(--color-fg)]"
+                      disabled={!hasIg}
+                      checked={platforms.includes("instagram")}
+                      onChange={() => togglePlatform("instagram")}
+                    />
+                    <Instagram className="h-4 w-4 text-[var(--color-fg-muted)]" />
+                    Instagram
+                    {hasIg ? (
+                      <span className="text-xs text-[var(--color-fg-muted)]">
+                        @{connection?.ig_username}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[var(--color-fg-muted)]">
+                        {t("social.igUnavailable")}
+                      </span>
+                    )}
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[var(--color-fg)]"
+                      checked={platforms.includes("facebook")}
+                      onChange={() => togglePlatform("facebook")}
+                    />
+                    <Facebook className="h-4 w-4 text-[var(--color-fg-muted)]" />
+                    Facebook
+                    <span className="text-xs text-[var(--color-fg-muted)]">
+                      {connection?.page_name}
+                    </span>
+                  </label>
+                </div>
+                {platforms.length === 0 && (
+                  <p className="mt-1 text-xs text-[var(--color-danger-fg)]">
+                    {t("social.platformsRequired")}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[var(--color-fg)]"
+                    checked={schedule}
+                    onChange={(e) => {
+                      setSchedule(e.target.checked);
+                      if (e.target.checked && !scheduleAt) setScheduleAt(nowAsLocalInput());
+                    }}
                   />
-                  <p className="text-xs text-[var(--color-fg-muted)]">{t("social.scheduleHint")}</p>
-                </>
-              )}
+                  {t("social.scheduleLabel")}
+                </label>
+                {schedule && (
+                  <>
+                    <Input
+                      type="datetime-local"
+                      value={scheduleAt}
+                      min={nowAsLocalInput()}
+                      onChange={(e) => setScheduleAt(e.target.value)}
+                    />
+                    <p className="text-xs text-[var(--color-fg-muted)]">{t("social.scheduleHint")}</p>
+                  </>
+                )}
+              </div>
+
+              <p className="text-xs text-[var(--color-fg-muted)]">{t("social.aiDisclosure")}</p>
             </div>
 
-            <p className="text-xs text-[var(--color-fg-muted)]">{t("social.aiDisclosure")}</p>
+            {showAssistant && generationId != null && (
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="justify-between lg:hidden"
+                  aria-expanded={assistantOpen}
+                  onClick={() => setAssistantOpen((v) => !v)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    {t("social.captionAssistant")}
+                  </span>
+                  <ChevronDown
+                    className={cn("h-4 w-4 transition-transform", assistantOpen && "rotate-180")}
+                  />
+                </Button>
+                {/* Kept mounted while collapsed so the thread is ready when opened. */}
+                <div className={cn(assistantOpen ? "block" : "hidden", "lg:block")}>
+                  <CaptionAssistant
+                    brandId={brandId}
+                    generationId={generationId}
+                    platforms={platforms}
+                    currentCaption={caption}
+                    appliedText={applied?.fullText ?? null}
+                    onUse={applySuggestion}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 

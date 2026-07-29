@@ -17,13 +17,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/Dialog";
-import { GenerationImage, GenerationImageSkeleton } from "@/components/brand/GenerationImage";
+import { GenerationImage } from "@/components/brand/GenerationImage";
+import { GenerationProgress } from "@/components/brand/GenerationProgress";
 import { PublishPostDialog } from "@/components/social/PublishPostDialog";
 import { useSocialConnection } from "@/components/social/useSocialConnection";
 import { brandsApi } from "@/lib/api/brands";
 import { ApiError } from "@/lib/api/client";
 import { qk } from "@/lib/queries/keys";
-import { GENERATION_POLL_MS, GENERATION_UI_TIMEOUT_MS } from "@/lib/constants";
+import {
+  GENERATION_POLL_FAST_AFTER_MS,
+  GENERATION_POLL_FAST_MS,
+  GENERATION_POLL_MS,
+  GENERATION_UI_TIMEOUT_MS,
+} from "@/lib/constants";
 import { formatRelativeDate } from "@/lib/format";
 import type { BrandGeneration, FeedbackRating } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -34,11 +40,23 @@ interface GenerationCardProps {
   generation: BrandGeneration;
   /** Collapsed cards render as a compact thumbnail row until clicked. */
   defaultExpanded?: boolean;
+  /** Brand primary colors, used to tint the in-progress placeholder. */
+  accentColors?: string[] | null;
 }
 
 const isActiveStatus = (s: string) => s === "pending" || s === "processing";
 
-export function GenerationCard({ brandId, generation, defaultExpanded = true }: GenerationCardProps) {
+const startedMs = (gen: BrandGeneration) => {
+  const ts = Date.parse(gen.started_at ?? gen.created_at);
+  return Number.isFinite(ts) ? ts : Date.now();
+};
+
+export function GenerationCard({
+  brandId,
+  generation,
+  defaultExpanded = true,
+  accentColors,
+}: GenerationCardProps) {
   const { t } = useT();
   const queryClient = useQueryClient();
   // Active generations always start expanded so the user sees the progress.
@@ -57,8 +75,14 @@ export function GenerationCard({ brandId, generation, defaultExpanded = true }: 
     queryFn: () => brandsApi.getGeneration(brandId, generation.id).then((r) => r.data),
     initialData: generation,
     enabled: isActiveStatus(generation.status) && !timedOut,
-    refetchInterval: (query) =>
-      isActiveStatus(query.state.data?.status ?? "") ? GENERATION_POLL_MS : false,
+    // Poll faster once the job enters its usual completion window, so a finished
+    // image doesn't sit on the server waiting for the next slow tick.
+    refetchInterval: (query) => {
+      const current = query.state.data;
+      if (!current || !isActiveStatus(current.status)) return false;
+      const elapsed = Date.now() - startedMs(current);
+      return elapsed >= GENERATION_POLL_FAST_AFTER_MS ? GENERATION_POLL_FAST_MS : GENERATION_POLL_MS;
+    },
   });
 
   const gen = data ?? generation;
@@ -192,9 +216,11 @@ export function GenerationCard({ brandId, generation, defaultExpanded = true }: 
 
         {isActive && (
           <>
-            <GenerationImageSkeleton
+            <GenerationProgress
               aspectRatio={gen.aspect_ratio}
-              message={timedOut ? t("brands.generationSlow") : t("brands.generationWorking")}
+              startedAt={gen.started_at ?? gen.created_at}
+              accentColors={accentColors}
+              slow={timedOut}
             />
             {timedOut && (
               <div className="flex justify-center">
