@@ -3,7 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, Facebook, Instagram, Sparkles } from "lucide-react";
+import { ChevronDown, Facebook, Images, Instagram, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 import { useSocialConnection } from "./useSocialConnection";
-import { CaptionAssistant } from "./CaptionAssistant";
+import { CaptionAssistant, type CaptionTarget } from "./CaptionAssistant";
 import { socialApi } from "@/lib/api/social";
 import { ApiError } from "@/lib/api/client";
 import { CAPTION_MAX } from "@/lib/constants";
@@ -29,12 +29,16 @@ import { useT } from "@/lib/i18n/I18nProvider";
 
 interface PublishPostDialogProps {
   brandId: number;
-  /** Image source: a completed generation of this brand… */
+  /** Content source: a completed generation of this brand… */
   generationId?: number;
-  /** …or any public https image URL. One of the two is required. */
+  /** …a completed carousel… */
+  carouselId?: number;
+  /** …or any public https image URL. Exactly one of the three is required. */
   imageUrl?: string;
-  /** Preview shown in the dialog. */
+  /** Preview shown in the dialog (the cover for carousels). */
   previewUrl: string;
+  /** Slide count, to label the carousel preview. */
+  slideCount?: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -48,8 +52,10 @@ function nowAsLocalInput(): string {
 export function PublishPostDialog({
   brandId,
   generationId,
+  carouselId,
   imageUrl,
   previewUrl,
+  slideCount,
   open,
   onOpenChange,
 }: PublishPostDialogProps) {
@@ -103,7 +109,11 @@ export function PublishPostDialog({
   const publishMutation = useMutation({
     mutationFn: () =>
       socialApi.createPost(brandId, {
-        ...(generationId != null ? { generation_id: generationId } : { image_url: imageUrl }),
+        ...(carouselId != null
+          ? { carousel_id: carouselId }
+          : generationId != null
+            ? { generation_id: generationId }
+            : { image_url: imageUrl }),
         caption: caption.trim() || undefined,
         platforms,
         publish_at: schedule && scheduleAt ? localInputToIso(scheduleAt) : undefined,
@@ -132,8 +142,14 @@ export function PublishPostDialog({
 
   const scheduleInvalid = schedule && (!scheduleAt || Number.isNaN(new Date(scheduleAt).getTime()));
   const canSubmit = isActive && platforms.length > 0 && !scheduleInvalid;
-  // The assistant needs the generation as context, so it's off for raw-URL posts.
-  const showAssistant = isActive && generationId != null;
+  // The assistant needs the generated content as context, so it's off for raw-URL posts.
+  const assistantTarget: CaptionTarget | null =
+    carouselId != null
+      ? { type: "carousel", id: carouselId }
+      : generationId != null
+        ? { type: "generation", id: generationId }
+        : null;
+  const showAssistant = isActive && assistantTarget != null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -170,12 +186,20 @@ export function PublishPostDialog({
             )}
           >
             <div className="space-y-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt=""
-                className="max-h-56 w-full rounded-xl bg-[var(--color-bg-subtle)] object-contain"
-              />
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewUrl}
+                  alt=""
+                  className="max-h-56 w-full rounded-xl bg-[var(--color-bg-subtle)] object-contain"
+                />
+                {carouselId != null && slideCount != null && (
+                  <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
+                    <Images className="h-3.5 w-3.5" />
+                    {t("carousels.slidesCount", { count: slideCount })}
+                  </span>
+                )}
+              </div>
 
               <div>
                 <div className="flex items-center justify-between">
@@ -279,7 +303,7 @@ export function PublishPostDialog({
               <p className="text-xs text-[var(--color-fg-muted)]">{t("social.aiDisclosure")}</p>
             </div>
 
-            {showAssistant && generationId != null && (
+            {showAssistant && assistantTarget != null && (
               <div className="flex flex-col gap-2">
                 <Button
                   variant="secondary"
@@ -300,7 +324,7 @@ export function PublishPostDialog({
                 <div className={cn(assistantOpen ? "block" : "hidden", "lg:block")}>
                   <CaptionAssistant
                     brandId={brandId}
-                    generationId={generationId}
+                    target={assistantTarget}
                     platforms={platforms}
                     currentCaption={caption}
                     appliedText={applied?.fullText ?? null}

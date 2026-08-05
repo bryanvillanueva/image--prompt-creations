@@ -8,6 +8,8 @@ import type {
 } from "../types";
 
 export interface CreatePostPayload {
+  /** Mutually exclusive with `generation_id`/`image_url`. */
+  carousel_id?: number;
   generation_id?: number;
   image_url?: string;
   caption?: string;

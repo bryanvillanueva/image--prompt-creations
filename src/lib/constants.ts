@@ -116,6 +116,20 @@ export const GENERATION_POLL_FAST_AFTER_MS = 20_000;
 export const GENERATION_POLL_FAST_MS = 2000;
 export const GENERATION_UI_TIMEOUT_MS = 120_000;
 
+// ---- Carousels ----
+
+export const CAROUSEL_TOPIC_MIN = 5;
+export const CAROUSEL_TOPIC_MAX = 2000;
+/** Fallbacks while the presets catalog loads; the backend response wins. */
+export const CAROUSEL_SLIDE_MIN = 3;
+export const CAROUSEL_SLIDE_MAX = 8;
+export const CAROUSEL_ASPECT_RATIOS = ["1:1", "4:5", "16:9"];
+export const CAROUSEL_DEFAULT_RATIO = "4:5";
+export const CAROUSEL_DEFAULT_SLIDES = 5;
+export const CAROUSEL_POLL_MS = 3000;
+/** A full carousel takes 1½–3 min (planning + 3 images in parallel). */
+export const CAROUSEL_UI_TIMEOUT_MS = 300_000;
+
 // ---- Social publishing (Meta) ----
 
 export const CAPTION_MAX = 2200;

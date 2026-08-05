@@ -148,12 +148,12 @@ export function AssetManager({ brandId, assets }: AssetManagerProps) {
       )}
 
       <Dialog open={uploadOpen} onOpenChange={(open) => { setUploadOpen(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg flex max-h-[90dvh] flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t("brands.assetUploadTitle")}</DialogTitle>
             <DialogDescription>{t("brands.assetUploadDescription")}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-0 flex-1 overflow-y-auto -mr-3 pr-3">
             <ImageUploader value={file} onChange={setFile} invalid={!!fileError} errorMessage={fileError ?? undefined} />
             <div>
               <Label htmlFor="asset_type">{t("brands.assetTypeLabel")}</Label>

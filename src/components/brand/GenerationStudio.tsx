@@ -23,9 +23,16 @@ import { useT } from "@/lib/i18n/I18nProvider";
 
 interface GenerationStudioProps {
   brand: Brand;
+  /** Preloads the instruction field once (e.g. a reused community prompt). */
+  initialInstruction?: string;
+  onInitialInstructionApplied?: () => void;
 }
 
-export function GenerationStudio({ brand }: GenerationStudioProps) {
+export function GenerationStudio({
+  brand,
+  initialInstruction,
+  onInitialInstructionApplied,
+}: GenerationStudioProps) {
   const { t } = useT();
   const queryClient = useQueryClient();
 
@@ -45,6 +52,19 @@ export function GenerationStudio({ brand }: GenerationStudioProps) {
   // composes the image for that platform without the user typing it.
   const formatContext = preset ? `\n\n${t(`brands.formats.${preset.id}.prompt`)}` : "";
   const maxChars = INSTRUCTION_MAX - formatContext.length;
+
+  const initialApplied = React.useRef(false);
+  React.useEffect(() => {
+    if (!initialInstruction || initialApplied.current) return;
+    initialApplied.current = true;
+    // Community prompts allow up to 8000 chars; the studio instruction doesn't.
+    setInstruction(
+      initialInstruction.length > maxChars
+        ? `${initialInstruction.slice(0, maxChars - 1)}…`
+        : initialInstruction,
+    );
+    onInitialInstructionApplied?.();
+  }, [initialInstruction, maxChars, onInitialInstructionApplied]);
 
   const toggleReference = (assetId: number) => {
     setReferenceIds((prev) =>

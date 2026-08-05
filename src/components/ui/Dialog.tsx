@@ -17,7 +17,7 @@ export const DialogContent = React.forwardRef<
     <RDialog.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-card data-[state=open]:animate-fade-in",
+        "fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md max-h-[90dvh] overflow-y-auto -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-card data-[state=open]:animate-fade-in",
         className,
       )}
       {...props}

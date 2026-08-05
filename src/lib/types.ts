@@ -220,6 +220,60 @@ export interface BrandGeneration {
   created_at: string;
 }
 
+// ---- Carousels ----
+
+export type CarouselStatus =
+  | "pending"
+  | "planning"
+  | "generating"
+  | "completed"
+  | "partial"
+  | "failed";
+
+export type CarouselSlideStatus = "pending" | "processing" | "completed" | "failed";
+
+export interface CarouselSlide {
+  position: number;
+  role: string;
+  headline: string | null;
+  status: CarouselSlideStatus;
+  image_url: string | null;
+  error_message: string | null;
+  completed_at: string | null;
+}
+
+export interface BrandCarousel {
+  id: number;
+  brand_id: number;
+  status: CarouselStatus;
+  topic: string;
+  slide_count: number;
+  aspect_ratio: string;
+  style_preset: string | null;
+  narrative_preset: string | null;
+  narrative: string | null;
+  error_message: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  /** The list endpoint returns only the header; slides come with the detail. */
+  slides?: CarouselSlide[];
+}
+
+export interface CarouselPresetOption {
+  id: string;
+  label: string;
+  description: string;
+}
+
+/** Static catalog from the backend; labels/descriptions are shown as-is. */
+export interface CarouselPresets {
+  styles: CarouselPresetOption[];
+  narratives: CarouselPresetOption[];
+  aspect_ratios: string[];
+  slide_count: { min: number; max: number };
+}
+
 export type SocialPlatform = "instagram" | "facebook";
 export type SocialConnectionStatus = "pending_page" | "active" | "expired";
 export type SocialPostStatus =
@@ -270,7 +324,8 @@ export interface CaptionMessage {
 
 export interface CaptionThread {
   thread_id: number;
-  generation_id: number;
+  generation_id?: number;
+  carousel_id?: number;
   messages: CaptionMessage[];
 }
 
@@ -283,8 +338,15 @@ export interface SocialPostResult {
 export interface ScheduledPost {
   id: number;
   brand_id: number;
+  /** Posts created before carousels existed may not carry these fields. */
+  post_type?: "image" | "carousel";
+  carousel_id?: number | null;
   generation_id: number | null;
+  /** Cover (slide 1) for carousels, the image itself otherwise. */
   image_url: string;
+  /** Ordered slide URLs for carousel posts. */
+  media_urls?: string[] | null;
+  aspect_ratio?: string | null;
   caption: string | null;
   platforms: SocialPlatform[];
   is_ai_generated: boolean;

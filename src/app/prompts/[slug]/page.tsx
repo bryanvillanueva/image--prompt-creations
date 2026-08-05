@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 import { CopyPromptButton } from "@/components/prompt/CopyPromptButton";
+import { ReusePromptButton } from "@/components/prompt/ReusePromptButton";
 import { LikeButton } from "@/components/prompt/LikeButton";
 import { SaveButton } from "@/components/prompt/SaveButton";
 import { ReportDialog } from "@/components/prompt/ReportDialog";
@@ -239,6 +240,7 @@ export default function PromptDetailPage() {
           {showSocialActions && (
             <>
               <CopyPromptButton prompt={prompt} />
+              <ReusePromptButton prompt={prompt} />
               <LikeButton prompt={prompt} />
               <SaveButton prompt={prompt} />
               {!isOwner && <ReportDialog promptId={prompt.id} slug={prompt.slug} />}
