@@ -3,7 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Facebook, Instagram, RefreshCw, X } from "lucide-react";
+import { Check, Facebook, Images, Instagram, RefreshCw, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -128,12 +128,23 @@ export function PostCard({ brandId, post: initialPost }: PostCardProps) {
   return (
     <Card>
       <CardBody className="flex gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={post.image_url}
-          alt=""
-          className="h-20 w-20 shrink-0 rounded-lg bg-[var(--color-bg-subtle)] object-cover"
-        />
+        <div className="relative h-20 w-20 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.image_url}
+            alt=""
+            className="h-full w-full rounded-lg bg-[var(--color-bg-subtle)] object-cover"
+          />
+          {post.post_type === "carousel" && (
+            <span
+              className="absolute bottom-1 right-1 inline-flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm"
+              title={t("carousels.postBadgeTitle")}
+            >
+              <Images className="h-3 w-3" />
+              {post.media_urls?.length ?? ""}
+            </span>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">

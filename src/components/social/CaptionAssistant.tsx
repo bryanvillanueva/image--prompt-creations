@@ -12,9 +12,14 @@ import type { CaptionMessage, CaptionSuggestion, CaptionThread, SocialPlatform }
 import { cn } from "@/lib/cn";
 import { useT } from "@/lib/i18n/I18nProvider";
 
+/** What the copywriter talks about: a single generation or a whole carousel. */
+export type CaptionTarget =
+  | { type: "generation"; id: number }
+  | { type: "carousel"; id: number };
+
 interface CaptionAssistantProps {
   brandId: number;
-  generationId: number;
+  target: CaptionTarget;
   /** Selected platforms — sent as context so the copy fits the target network. */
   platforms: SocialPlatform[];
   /** Current textarea content, to label the action as "use" or "replace". */
@@ -44,7 +49,7 @@ function BubbleSkeleton() {
 
 export function CaptionAssistant({
   brandId,
-  generationId,
+  target,
   platforms,
   currentCaption,
   appliedText,
@@ -52,7 +57,10 @@ export function CaptionAssistant({
 }: CaptionAssistantProps) {
   const { t } = useT();
   const queryClient = useQueryClient();
-  const queryKey = qk.brands.captionThread(brandId, generationId);
+  const queryKey =
+    target.type === "carousel"
+      ? qk.brands.carouselCaptionThread(brandId, target.id)
+      : qk.brands.captionThread(brandId, target.id);
 
   // Read at call time so a platform toggle doesn't refetch the thread.
   const platformsRef = React.useRef(platforms);
@@ -69,7 +77,10 @@ export function CaptionAssistant({
   const threadQuery = useQuery({
     queryKey,
     queryFn: () =>
-      captionsApi.openThread(brandId, generationId, platformsRef.current).then((r) => r.data),
+      (target.type === "carousel"
+        ? captionsApi.openCarouselThread(brandId, target.id, platformsRef.current)
+        : captionsApi.openThread(brandId, target.id, platformsRef.current)
+      ).then((r) => r.data),
     staleTime: Infinity,
     retry: false,
   });

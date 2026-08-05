@@ -32,6 +32,11 @@ export const qk = {
     posts: (id: number, page: number) => ["brands", id, "posts", page] as const,
     post: (id: number, postId: number) => ["brands", id, "post", postId] as const,
     captionThread: (id: number, genId: number) => ["brands", id, "caption-thread", genId] as const,
+    carouselPresets: ["brands", "carousel-presets"] as const,
+    carousels: (id: number, page: number) => ["brands", id, "carousels", page] as const,
+    carousel: (id: number, carouselId: number) => ["brands", id, "carousel", carouselId] as const,
+    carouselCaptionThread: (id: number, carouselId: number) =>
+      ["brands", id, "carousel-caption-thread", carouselId] as const,
   },
   admin: {
     pending: (filters: { status?: PromptStatus; page?: number; limit?: number }) =>

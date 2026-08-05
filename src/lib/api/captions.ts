@@ -15,6 +15,16 @@ export const captionsApi = {
       platforms?.length ? { platforms } : undefined,
     ),
 
+  /**
+   * Same contract as `openThread`, but the copywriter receives the whole
+   * carousel (arc + printed texts). The carousel must be `completed`.
+   */
+  openCarouselThread: (brandId: number, carouselId: number, platforms?: SocialPlatform[]) =>
+    api.post<CaptionThread>(
+      `/brands/${brandId}/carousels/${carouselId}/caption-thread`,
+      platforms?.length ? { platforms } : undefined,
+    ),
+
   /** Returns just this turn ([user, assistant]) to append to the local history. */
   sendMessage: async (
     brandId: number,
